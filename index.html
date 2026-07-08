@@ -1207,7 +1207,7 @@ footer.app-footer{
       <select id="fKategori" onchange="onKategoriChange()">
         <option value="">-- Pilih Kategori --</option>
       </select>
-      <div class="field-note">Peserta hanya boleh bertanding dalam SATU kategori umur. Pilihan di atas dikawal automatik mengikut umur yang dimasukkan.</div>
+      <div class="field-note">Peserta hanya boleh bertanding dalam SATU kategori umur. Peserta Bawah 10/Bawah 15 boleh pilih naik ke Bawah 12/Bawah 19 secara sukarela — tetapi sebaik didaftar di kategori atas, mereka HANYA layak kategori atas itu sahaja (tiada turun semula).</div>
 
       <label for="fNoPeserta">No. Peserta (Bib)</label>
       <input type="text" id="fNoPeserta" placeholder="Ikut pilihan anda, cth: 01, SK01, Bib-5, dll">
@@ -1324,7 +1324,7 @@ const ADMIN_PASSWORD = "kopkadmin";
    2. Extensions > Apps Script > tampal kandungan fail Code.gs yang disertakan.
    3. Deploy > New deployment > Web app > Execute as: Me > Who has access: Anyone.
    4. Salin URL Web App yang dijana, gantikan nilai di bawah. */
-const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyET8c8vquYygcSPfw4U0WeqrC3vHP_fZhYFHMXBVQXBOfcsieKS2MfVAjNTc89_qZXrQ/exec";
+const GAS_WEB_APP_URL = "PASTE_URL_WEB_APP_DI_SINI";
 
 function isGasConfigured(){
   return GAS_WEB_APP_URL && GAS_WEB_APP_URL.indexOf("PASTE_URL_WEB_APP") === -1;
@@ -1757,11 +1757,25 @@ function tryRestoreSession(){
 /* =========================================================
    CATEGORY / EVENT HELPERS
    ========================================================= */
+/* Peraturan "naik kategori": peserta dalam julat umur kategori bawah boleh
+   PILIH untuk bertanding di kategori atas sekali sahaja. Sebaik didaftarkan
+   di kategori atas, mereka tidak lagi layak kategori bawah (kekal begitu
+   sebab satu pendaftaran = satu kategori). Tiada laluan turun kategori. */
+const PLAY_UP_MAP = {
+  B10: ["B12"],
+  B15: ["B19"]
+};
+
 function eligibleAgeCategories(age){
-  return Object.keys(CATEGORY_META).filter(k=>{
+  const base = Object.keys(CATEGORY_META).filter(k=>{
     const m = CATEGORY_META[k];
     return m.group === "umur" && age >= m.ageMin && age <= m.ageMax;
   });
+  const expanded = new Set(base);
+  base.forEach(k=>{
+    (PLAY_UP_MAP[k] || []).forEach(target => expanded.add(target));
+  });
+  return [...expanded];
 }
 
 function onUmurChange(){
@@ -1784,6 +1798,10 @@ function populateKategoriOptions(){
   const khasOptGroup = document.createElement("optgroup");
   khasOptGroup.label = "Kategori Khas / Terbuka";
 
+  const strictEligible = !isNaN(umurVal) ? Object.keys(CATEGORY_META).filter(k=>{
+    const m = CATEGORY_META[k];
+    return m.group === "umur" && umurVal >= m.ageMin && umurVal <= m.ageMax;
+  }) : [];
   const eligible = !isNaN(umurVal) ? eligibleAgeCategories(umurVal) : [];
   const schoolPeringkat = getCurrentSchoolPeringkat();
 
@@ -1797,6 +1815,8 @@ function populateKategoriOptions(){
       if(!isNaN(umurVal) && !eligible.includes(key)){
         opt.disabled = true;
         opt.textContent += " — tidak layak untuk umur ini";
+      } else if(!isNaN(umurVal) && !strictEligible.includes(key) && eligible.includes(key)){
+        opt.textContent += " — Naik Kategori (pilihan)";
       }
       umurOptGroup.appendChild(opt);
     } else {
