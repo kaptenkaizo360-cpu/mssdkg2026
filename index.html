@@ -710,9 +710,13 @@ tbody tr:hover{background:rgba(11,31,92,0.03);}
 .pengurus-info b{color:var(--johor-blue);}
 .unsaved-dot{
   display:none;
-  width:8px;height:8px;border-radius:50%;
+  position:absolute;
+  top:-3px;right:-3px;
+  width:10px;height:10px;border-radius:50%;
   background:#FFD54A;
-  box-shadow:0 0 0 3px rgba(255,213,74,0.35);
+  box-shadow:0 0 0 3px rgba(255,213,74,0.35), 0 0 0 2px #fff;
+  pointer-events:none;
+  z-index:3;
 }
 .unsaved-dot.show{display:inline-block;}
 
@@ -873,11 +877,13 @@ footer.app-footer{
       <button class="btn btn-ghost btn-sm" style="color:#fff;border-color:rgba(255,255,255,0.4);" onclick="editPengurus()" title="Sunting maklumat pengurus">
         Sunting Pengurus
       </button>
-      <button class="btn btn-primary btn-sm" id="btnSaveSheet" onclick="saveToSheet()" title="Simpan data ke pangkalan data pusat">
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3h11l3 3v15H5z"/><path d="M8 3v6h8V3"/><path d="M7 21v-8h10v8"/></svg>
-        Simpan
+      <span style="position:relative;display:inline-flex;">
+        <button class="btn btn-primary btn-sm" id="btnSaveSheet" onclick="saveToSheet()" title="Simpan data ke pangkalan data pusat">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3h11l3 3v15H5z"/><path d="M8 3v6h8V3"/><path d="M7 21v-8h10v8"/></svg>
+          Simpan
+        </button>
         <span class="unsaved-dot" id="unsavedDot"></span>
-      </button>
+      </span>
       <button class="btn btn-outline-red btn-sm" style="background:#fff;" id="btnSaveLogout" onclick="saveAndLogout()" title="Simpan data kemudian log keluar">
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3h11l3 3v15H5z"/><path d="M8 3v6h8V3"/><path d="M7 21v-8h10v8"/></svg>
         Simpan &amp; Keluar
@@ -1018,12 +1024,18 @@ footer.app-footer{
             </select>
           </div>
           <div>
-            <label for="resultsAcara">Acara</label>
-            <select id="resultsAcara" onchange="onResultsAcaraChange()">
-              <option value="">-- Pilih Acara --</option>
+            <label for="resultsJantina">Jantina</label>
+            <select id="resultsJantina" onchange="onResultsAcaraChange()">
+              <option value="L">Lelaki</option>
+              <option value="P">Perempuan</option>
             </select>
           </div>
         </div>
+        <label for="resultsAcara">Acara</label>
+        <select id="resultsAcara" onchange="onResultsAcaraChange()">
+          <option value="">-- Pilih Acara --</option>
+        </select>
+        <div class="field-note">Keputusan direkod berasingan mengikut kategori umur DAN jantina (Lelaki / Perempuan bertanding berasingan).</div>
         <div class="field-note" id="resultsTypeHint"></div>
 
         <div id="resultsEntryWrap" style="margin-top:16px;"></div>
@@ -1324,7 +1336,7 @@ const ADMIN_PASSWORD = "kopkadmin";
    2. Extensions > Apps Script > tampal kandungan fail Code.gs yang disertakan.
    3. Deploy > New deployment > Web app > Execute as: Me > Who has access: Anyone.
    4. Salin URL Web App yang dijana, gantikan nilai di bawah. */
-const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxJ3ThD2SbR6Eq6OH3oPgaeQLxzs76mKwK7DeXrqtb0ioAwXhN5beABzceKz2geVU_GmA/exec";
+const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwzLnI08QyfxqLnM-IrxQ0mIShe3IPDH4hNd_-OR37erExSCo3JQXk4ZHA5wUIv0-0s6w/exec";
 
 function isGasConfigured(){
   return GAS_WEB_APP_URL && GAS_WEB_APP_URL.indexOf("PASTE_URL_WEB_APP") === -1;
@@ -1481,6 +1493,10 @@ async function fetchAllFromSheet(timeoutMs){
 }
 
 function goHome(){
+  const inTeacherApp = document.getElementById("app").style.display !== "none";
+  if(inTeacherApp && unsavedChanges){
+    showToast("Peringatan: sila tekan Simpan dahulu supaya data terkini disegerak ke pangkalan data pusat.", "warn");
+  }
   document.querySelectorAll(".modal-overlay.show").forEach(m=>m.classList.remove("show"));
   const filterKategori = document.getElementById("filterKategori");
   if(filterKategori){ filterKategori.value = ""; renderTable(); }
@@ -1674,7 +1690,7 @@ function doAdminLogout(){
   loadPublicStats(); loadPublicResults();
 }
 
-function savePengurus(){
+async function savePengurus(){
   const nama = document.getElementById("inpPengurusNama").value.trim();
   const tel = document.getElementById("inpPengurusTel").value.trim();
   const errEl = document.getElementById("pengurusError");
@@ -1685,10 +1701,19 @@ function savePengurus(){
   errEl.classList.remove("show");
   schoolData.pengurus = { nama, tel };
   persistSchoolData();
-  markUnsaved();
   logAction("sunting", nama, "Maklumat pengurus pasukan dikemaskini pada " + formatDateTime(new Date().toISOString()));
   document.getElementById("pengurusModal").classList.remove("show");
   enterApp();
+
+  if(isGasConfigured() && schoolData.peserta.length > 0){
+    const success = await saveToSheet(true);
+    if(!success){
+      markUnsaved();
+      showToast("Maklumat disimpan pada peranti ini, tetapi gagal disegerak ke Google Sheet. Sila tekan Simpan.", "danger");
+    }
+  } else {
+    markUnsaved();
+  }
 }
 
 function editPengurus(){
@@ -2018,7 +2043,7 @@ function validateNoPeserta(rawValue, peringkat, excludeId){
   return null;
 }
 
-function savePeserta(){
+async function savePeserta(){
   const id = currentEditingId();
   const nama = document.getElementById("fNama").value.trim();
   const noOku = document.getElementById("fOku").value.trim();
@@ -2097,10 +2122,19 @@ function savePeserta(){
   }
 
   persistSchoolData();
-  markUnsaved();
-  closePesertaModal();
   populateFilterKategoriOptions();
   renderAll();
+  closePesertaModal();
+
+  if(isGasConfigured() && schoolData.pengurus.nama && schoolData.pengurus.tel){
+    const success = await saveToSheet(true);
+    if(!success){
+      markUnsaved();
+      showToast("Disimpan pada peranti ini, tetapi gagal disegerak ke Google Sheet. Sila tekan Simpan.", "danger");
+    }
+  } else {
+    markUnsaved();
+  }
 }
 
 let pendingDeleteId = null;
@@ -2401,7 +2435,7 @@ async function fetchResultsFromSheet(){
     if(!data || !data.ok) return;
     const grouped = {};
     (data.results || []).forEach(r=>{
-      const key = r.Kategori + "||" + r.Acara;
+      const key = r.Kategori + "||" + r.Acara + "||" + (r.Jantina || "MIX");
       if(!grouped[key]) grouped[key] = [];
       grouped[key].push({
         entryKey: r.EntryKey, label: r.Label, sekolah: r.Sekolah,
@@ -2468,18 +2502,19 @@ function onResultsKategoriChange(){
   }
 }
 
-function getResultEntries(kategori, type, baseName){
+function getResultEntries(kategori, type, baseName, jantina){
   const all = getAllSchoolsData();
   const entries = [];
   if(type === "IND"){
     all.forEach(x=>{
       x.data.peserta.forEach(p=>{
-        if(p.kategori === kategori && p.individu.includes(baseName)){
+        if(p.kategori === kategori && p.individu.includes(baseName) && p.jantina === jantina){
           entries.push({ entryKey: p.id, label: p.nama, sekolah: x.school.name });
         }
       });
     });
   } else {
+    // Acara kumpulan (relay) sedia berpasukan campur (2L2P/4L4P) — tidak diasingkan ikut jantina.
     const seen = {};
     all.forEach(x=>{
       x.data.peserta.forEach(p=>{
@@ -2516,20 +2551,27 @@ function onResultsAcaraChange(){
   const type = parts[0];
   const baseName = parts[1];
   const kategori = document.getElementById("resultsKategori").value;
+  const jantina = document.getElementById("resultsJantina").value;
   const isPadang = type === "IND" && PADANG_EVENTS.includes(baseName);
+  const jantinaGroup = type === "IND" ? jantina : "MIX";
   hint.textContent = isPadang
     ? "Acara PADANG \u2014 masukkan JARAK (meter). Nombor PALING BESAR menang."
     : "Acara BALAPAN \u2014 masukkan MASA (saat). Nombor PALING KECIL (terpantas) menang.";
+  if(type === "IND"){
+    hint.textContent += (jantina === "L" ? " \u2014 Kategori Lelaki." : " \u2014 Kategori Perempuan.");
+  } else {
+    hint.textContent += " \u2014 Acara berpasukan campuran (tidak diasingkan jantina).";
+  }
 
-  const entries = getResultEntries(kategori, type, baseName);
+  const entries = getResultEntries(kategori, type, baseName, jantina);
   if(entries.length === 0){
     wrap.innerHTML = '<div class="field-note">Tiada peserta/pasukan didaftarkan untuk acara ini.</div>';
     return;
   }
 
-  currentResultsContext = { kategori, type, baseName, isPadang, entries };
+  currentResultsContext = { kategori, type, baseName, isPadang, entries, jantinaGroup };
 
-  const existingKey = kategori + "||" + baseName;
+  const existingKey = kategori + "||" + baseName + "||" + jantinaGroup;
   const existingResults = resultsDataCache[existingKey] || [];
   const existingByKey = {};
   existingResults.forEach(r=>{ existingByKey[r.entryKey] = r; });
@@ -2547,14 +2589,14 @@ function onResultsAcaraChange(){
   calcBtn.style.display = "inline-flex";
 
   if(existingResults.length){
-    renderResultsOutput(existingResults, isPadang, baseName, kategori);
+    renderResultsOutput(existingResults, isPadang, baseName, kategori, jantinaGroup);
   }
 }
 
 async function calculateAndSaveResults(){
   if(!currentResultsContext) return;
   const ctx = currentResultsContext;
-  const kategori = ctx.kategori, baseName = ctx.baseName, isPadang = ctx.isPadang, entries = ctx.entries;
+  const kategori = ctx.kategori, baseName = ctx.baseName, isPadang = ctx.isPadang, entries = ctx.entries, jantinaGroup = ctx.jantinaGroup;
 
   const inputs = [...document.querySelectorAll('#resultsEntryWrap input[data-entry-key]')];
   const filled = [];
@@ -2577,20 +2619,20 @@ async function calculateAndSaveResults(){
     f.pingat = idx===0 ? "Emas" : idx===1 ? "Perak" : idx===2 ? "Gangsa" : (idx===3 ? "Tempat Ke-4" : "");
   });
 
-  const key = kategori + "||" + baseName;
+  const key = kategori + "||" + baseName + "||" + jantinaGroup;
   resultsDataCache[key] = filled;
   persistResultsCacheLocal();
 
-  renderResultsOutput(filled, isPadang, baseName, kategori);
+  renderResultsOutput(filled, isPadang, baseName, kategori, jantinaGroup);
   showToast("Keputusan dikira dan disimpan.", "ok");
-  logAction("keputusan", baseName, "Keputusan " + CATEGORY_META[kategori].label + " - " + baseName + " dikira & disimpan pada " + formatDateTime(new Date().toISOString()));
+  logAction("keputusan", baseName, "Keputusan " + CATEGORY_META[kategori].label + " (" + (jantinaGroup==="MIX"?"Campuran":jantinaGroup==="L"?"Lelaki":"Perempuan") + ") - " + baseName + " dikira & disimpan pada " + formatDateTime(new Date().toISOString()));
 
   if(isGasConfigured()){
     try{
       const res = await fetch(GAS_WEB_APP_URL, {
         method:"POST",
         headers:{ "Content-Type":"text/plain;charset=utf-8" },
-        body: JSON.stringify({ action:"saveResults", kategori: kategori, acara: baseName, entries: filled })
+        body: JSON.stringify({ action:"saveResults", kategori: kategori, acara: baseName, jantina: jantinaGroup, entries: filled })
       });
       const data = await res.json();
       if(!data || !data.ok) throw new Error((data && data.error) || "ralat");
@@ -2602,10 +2644,11 @@ async function calculateAndSaveResults(){
   }
 }
 
-function renderResultsOutput(sortedEntries, isPadang, baseName, kategori){
+function renderResultsOutput(sortedEntries, isPadang, baseName, kategori, jantinaGroup){
   const wrap = document.getElementById("resultsOutputWrap");
   const unit = isPadang ? "m" : "s";
-  const header = `<div class="section-label" style="margin-top:0;">Kedudukan \u2014 ${escapeHtml(CATEGORY_META[kategori].label)} &middot; ${escapeHtml(baseName)}</div>`;
+  const jantinaLabel = jantinaGroup==="MIX" ? "Campuran" : (jantinaGroup==="L" ? "Lelaki" : "Perempuan");
+  const header = `<div class="section-label" style="margin-top:0;">Kedudukan \u2014 ${escapeHtml(CATEGORY_META[kategori].label)} &middot; ${escapeHtml(baseName)} &middot; ${jantinaLabel}</div>`;
   const rows = sortedEntries.map(r=>{
     const medalClass = r.kedudukan===1?"emas":r.kedudukan===2?"perak":r.kedudukan===3?"gangsa":"ke4";
     const medalLabel = r.pingat || ("Ke-"+r.kedudukan);
