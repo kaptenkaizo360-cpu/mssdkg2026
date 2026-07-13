@@ -1447,7 +1447,7 @@ function formatLockoutRemaining(ms){
    2. Extensions > Apps Script > tampal kandungan fail Code.gs yang disertakan.
    3. Deploy > New deployment > Web app > Execute as: Me > Who has access: Anyone.
    4. Salin URL Web App yang dijana, gantikan nilai di bawah. */
-const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwlU15Kwz1LOjooO2hrSC7cSQktSUGuOSspcofVpxsbPy_vas3wJS73S7fwtUGrk2wB8Q/exec";
+const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbx9iMii1tLHaUH_LLU4rQtJUfgmqzT2_qHOscxSMU9ONtQsHHo5I1BJ-5_nYvJyun2Cxg/exec";
 
 /* Kunci rahsia API — MESTI SAMA PERSIS dengan API_SECRET dalam Code.gs.
    Ini disertakan pada setiap permintaan simpan/padam/reset supaya
@@ -2126,6 +2126,13 @@ function currentEditingId(){
   return v ? v : null;
 }
 
+const INDIVIDU_QUOTA_PADANG = 10;
+const INDIVIDU_QUOTA_OTHER = 4;
+
+function getIndividuQuota(eventName){
+  return PADANG_EVENTS.includes(eventName) ? INDIVIDU_QUOTA_PADANG : INDIVIDU_QUOTA_OTHER;
+}
+
 function padangCountForSchool(eventName, excludeId){
   return schoolData.peserta.filter(p => p.id !== excludeId && p.individu.includes(eventName)).length;
 }
@@ -2157,17 +2164,15 @@ function renderEventCheckboxes(){
     label.className = "event-check";
     const checked = selectedIndividu.includes(evName);
     let disabled = false;
-    let hint = "";
-    if(isPadang){
-      const count = padangCountForSchool(evName, excludeId);
-      const full = count >= 2 && !checked;
-      if(full){ disabled = true; }
-      hint = "Jumlah didaftarkan sekolah ini: " + count + " peserta (had maksimum 2)";
-    }
+    const quota = getIndividuQuota(evName);
+    const count = padangCountForSchool(evName, excludeId);
+    const full = count >= quota && !checked;
+    if(full){ disabled = true; }
+    const hint = "Jumlah didaftarkan sekolah ini: " + count + " peserta (had maksimum " + quota + (isPadang ? ", acara padang" : "") + ")";
     if(checked) label.classList.add("checked");
     if(disabled) label.classList.add("disabled");
     label.innerHTML = `
-      <input type="checkbox" data-type="individu" value="${evName}" ${isPadang?`data-padang-full="${disabled}"`:""} ${checked?"checked":""} ${disabled?"disabled":""} onchange="onEventCheckChange(this)">
+      <input type="checkbox" data-type="individu" value="${evName}" data-padang-full="${disabled}" ${checked?"checked":""} ${disabled?"disabled":""} onchange="onEventCheckChange(this)">
       <span class="ename">${evName}${hint ? `<span class="ehint">${hint}</span>` : ""}</span>
     `;
     individuWrap.appendChild(label);
@@ -2336,15 +2341,14 @@ async function savePeserta(){
     return;
   }
 
-  // re-check padang quota at save time in case of race between renders
+  // sahkan semula kuota acara individu (padang & balapan) semasa simpan
   for(const evName of individu){
-    if(PADANG_EVENTS.includes(evName)){
-      const count = padangCountForSchool(evName, id);
-      if(count >= 2){
-        formErr.textContent = "Kuota acara padang '" + evName + "' untuk sekolah anda telah penuh (2/2).";
-        formErr.classList.add("show");
-        return;
-      }
+    const quota = getIndividuQuota(evName);
+    const count = padangCountForSchool(evName, id);
+    if(count >= quota){
+      formErr.textContent = "Kuota acara '" + evName + "' untuk sekolah anda telah penuh (" + quota + "/" + quota + ").";
+      formErr.classList.add("show");
+      return;
     }
   }
 
