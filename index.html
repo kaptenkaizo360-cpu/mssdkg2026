@@ -1292,7 +1292,7 @@ footer.app-footer{
       <div class="section-label">Acara Individu <span class="event-quota-tag" id="individuCountTag">0/2</span></div>
       <div class="event-grid" id="individuEvents"></div>
 
-      <div class="section-label">Acara Berkumpulan <span class="event-quota-tag" id="kumpulanCountTag">0/2</span></div>
+      <div class="section-label">Acara Berkumpulan <span class="event-quota-tag" id="kumpulanCountTag">0/3</span></div>
       <div class="event-grid" id="kumpulanEvents"></div>
 
       <div class="error-text" id="formError"></div>
@@ -1341,7 +1341,7 @@ const EVENTS_BY_CATEGORY = {
 
 const PADANG_EVENTS = ["L/Jauh","L/Peluru","L/Cakera","R/Lembing"];
 const MAX_INDIVIDU = 2;
-const MAX_KUMPULAN = 2;
+const MAX_KUMPULAN = 3;
 
 /* Senarai 40 sekolah PPKI Daerah Kluang.
    Kata laluan setiap sekolah kini ialah NOMBOR TELEFON PENGURUS PASUKAN
@@ -1447,7 +1447,7 @@ function formatLockoutRemaining(ms){
    2. Extensions > Apps Script > tampal kandungan fail Code.gs yang disertakan.
    3. Deploy > New deployment > Web app > Execute as: Me > Who has access: Anyone.
    4. Salin URL Web App yang dijana, gantikan nilai di bawah. */
-const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbx9iMii1tLHaUH_LLU4rQtJUfgmqzT2_qHOscxSMU9ONtQsHHo5I1BJ-5_nYvJyun2Cxg/exec";
+const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz9fsq9nT5JaZkXg-xTep-Mf_OIWfcMsNH77c5lIDOPkqx1jYFpLw5YFZA9qbpsY05FgQ/exec";
 
 /* Kunci rahsia API — MESTI SAMA PERSIS dengan API_SECRET dalam Code.gs.
    Ini disertakan pada setiap permintaan simpan/padam/reset supaya
@@ -2185,7 +2185,7 @@ function renderEventCheckboxes(){
   kumpulanList.forEach(baseName=>{
     const isOpen = baseName === OPEN_KUMPULAN_EVENT;
     const isShared4x50 = baseName === SHARED_4X50_EVENT;
-    ["A","B"].forEach(team=>{
+    ["A","B","C","D"].forEach(team=>{
       const evName = baseName + " — Pasukan " + team;
       const label = document.createElement("label");
       label.className = "event-check";
@@ -2193,7 +2193,7 @@ function renderEventCheckboxes(){
       if(checked) label.classList.add("checked");
       label.innerHTML = `
         <input type="checkbox" data-type="kumpulan" value="${evName}" ${checked?"checked":""} onchange="onEventCheckChange(this)">
-        <span class="ename">${evName}${(isOpen && team==="A") ? '<span class="ehint">Terbuka — semua kategori umur boleh menyertai</span>' : ""}${(isShared4x50 && team==="A") ? '<span class="ehint">Dikongsi — kategori Bawah 8 dan Bawah 10 boleh menyertai</span>' : ""}${team==="B" ? '<span class="ehint">Guna Pasukan B jika sekolah menghantar lebih 1 pasukan untuk acara ini</span>' : ""}</span>
+        <span class="ename">${evName}${(isOpen && team==="A") ? '<span class="ehint">Terbuka — semua kategori umur boleh menyertai</span>' : ""}${(isShared4x50 && team==="A") ? '<span class="ehint">Dikongsi — kategori Bawah 8 dan Bawah 10 boleh menyertai</span>' : ""}${team!=="A" ? '<span class="ehint">Guna Pasukan '+team+' jika sekolah menghantar lebih daripada '+(team==="B"?"1":team==="C"?"2":"3")+' pasukan untuk acara ini</span>' : ""}</span>
       `;
       kumpulanWrap.appendChild(label);
     });
@@ -2336,7 +2336,7 @@ async function savePeserta(){
     return;
   }
   if(individu.length > MAX_INDIVIDU || kumpulan.length > MAX_KUMPULAN){
-    formErr.textContent = "Had maksimum acara telah dilebihi (2 individu dan 2 berkumpulan sahaja).";
+    formErr.textContent = "Had maksimum acara telah dilebihi (" + MAX_INDIVIDU + " individu dan " + MAX_KUMPULAN + " berkumpulan sahaja).";
     formErr.classList.add("show");
     return;
   }
