@@ -564,6 +564,37 @@ tbody tr:hover{background:rgba(11,31,92,0.03);}
 }
 .badge-kategori.khas{background:var(--gold);color:#392c00;}
 
+/* ---------- Warna pastel setiap kategori (senang scan/urus) ---------- */
+.cat-card{
+  border-radius:12px;
+  padding:14px 16px;
+  cursor:pointer;
+  transition:transform .12s ease, box-shadow .12s ease;
+  border:1px solid rgba(0,0,0,0.06);
+}
+.cat-card:hover{transform:translateY(-2px);box-shadow:0 8px 18px -8px rgba(0,0,0,0.25);}
+.cat-card.active{outline:3px solid rgba(0,0,0,0.25);}
+.cat-card .cc-num{font-family:'Oswald',sans-serif;font-size:28px;font-weight:700;line-height:1;}
+.cat-card .cc-label{font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:0.03em;margin-top:6px;opacity:0.75;}
+.cat-quick-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(110px,1fr));
+  gap:8px;
+  margin-bottom:16px;
+}
+.cat-quick-grid .cat-card{padding:10px 8px;text-align:center;}
+.cat-quick-grid .cat-card .cc-num{font-size:20px;}
+.cat-quick-grid .cat-card .cc-label{font-size:10px;margin-top:3px;}
+
+.cat-B8{background:#DCEBFF;color:#0B3C7A;}
+.cat-B10{background:#DDF5E4;color:#0F5C33;}
+.cat-B12{background:#FFF4D6;color:#7A5A00;}
+.cat-B15{background:#FFE1EC;color:#8A0F45;}
+.cat-B19{background:#EAE0FF;color:#4B2A8F;}
+.cat-SD_SR{background:#FFE6D6;color:#8A3C0F;}
+.cat-SD_SM{background:#D9F5F2;color:#0F6E63;}
+.cat-PRA{background:#FFEAD6;color:#8A4F0F;}
+
 .medal-badge{
   display:inline-flex;
   align-items:center;
@@ -588,6 +619,48 @@ tbody tr:hover{background:rgba(11,31,92,0.03);}
   border-radius:8px;
   margin-bottom:8px;
 }
+
+.heat-card{
+  border:1.5px solid var(--johor-blue);
+  border-radius:10px;
+  padding:14px;
+  margin-bottom:14px;
+  background:rgba(11,31,92,0.03);
+}
+.heat-title{
+  font-family:'Oswald',sans-serif;
+  font-size:14px;
+  color:var(--johor-blue);
+  text-transform:uppercase;
+  margin-bottom:10px;
+}
+.heat-rank{
+  display:inline-block;
+  font-family:'IBM Plex Mono',monospace;
+  font-weight:700;
+  color:var(--gold);
+  margin-right:4px;
+}
+.heat-time-input{width:110px;flex-shrink:0;}
+
+.olahragawan-card{
+  border:2px solid var(--gold);
+  border-radius:12px;
+  padding:16px;
+  background:linear-gradient(135deg,#FFF9E6,#FFF);
+}
+.olahragawan-card .oc-title{
+  font-family:'Oswald',sans-serif;
+  font-size:13px;
+  color:#8a6d00;
+  text-transform:uppercase;
+  letter-spacing:0.03em;
+  margin-bottom:8px;
+}
+.olahragawan-card .oc-name{font-family:'Oswald',sans-serif;font-size:20px;color:var(--ink);}
+.olahragawan-card .oc-school{font-size:12px;color:var(--muted);margin-bottom:8px;}
+.olahragawan-card .oc-stats{font-size:11.5px;color:var(--muted);line-height:1.6;}
+.olahragawan-card .oc-empty{font-size:12.5px;color:var(--muted);font-style:italic;}
 .results-entry-row .re-label{flex:1;font-size:13px;}
 .results-entry-row .re-label .re-school{display:block;font-size:11px;color:var(--muted);font-weight:600;}
 .results-entry-row input{width:130px;flex-shrink:0;}
@@ -772,11 +845,11 @@ footer.app-footer{
       <label for="inpSekolah">Nama Sekolah</label>
       <select id="inpSekolah"></select>
 
-      <label for="inpPassword">Nombor Telefon Pengurus (Kata Laluan)</label>
-      <input type="password" id="inpPassword" placeholder="cth: 0123456789" inputmode="numeric" required onkeydown="if(event.key==='Enter')doLogin()">
-      <div class="field-note" style="margin-top:-2px;">Kali pertama log masuk sekolah anda? Masukkan nombor telefon anda — ia terus menjadi kata laluan tetap. Kali seterusnya, guna nombor yang sama.</div>
+      <label for="inpPassword">Nombor Telefon Pengurus Pasukan</label>
+      <input type="text" id="inpPassword" placeholder="cth: 0123456789" inputmode="numeric" required onkeydown="if(event.key==='Enter')doLogin()">
+      <div class="field-note" style="margin-top:-2px;">Masukkan nombor telefon anda untuk masuk/daftar sekolah ini. Tiada kata laluan khas diperlukan.</div>
 
-      <div class="error-text" id="loginError">Kata laluan salah. Sila cuba lagi.</div>
+      <div class="error-text" id="loginError">Sila masukkan nombor telefon yang sah.</div>
 
       <button class="btn btn-primary btn-block" id="btnLogin" onclick="doLogin()">Log Masuk</button>
     </div>
@@ -1033,7 +1106,7 @@ footer.app-footer{
       <div class="stat-card"><div class="num" id="adminStatKumpulan">0</div><div class="lbl">Pasukan Kumpulan Lengkap</div></div>
     </div>
 
-    <div id="adminResultsSlot"><div class="panel no-print" id="keputusanModulePanel" style="border-color:var(--gold);">
+    <div id="adminResultsSlot"><div id="keputusanModulePanel"><div class="panel no-print" style="border-color:var(--gold);">
       <div class="panel-head">
         <h2 style="color:#8a6d00;">Kejohanan — Keputusan &amp; Kedudukan</h2>
         <span class="event-quota-tag">Kemasukan Keputusan</span>
@@ -1044,6 +1117,9 @@ footer.app-footer{
           Sistem akan susun automatik — <b>acara padang: jarak paling jauh menang</b>, <b>acara balapan: masa paling pantas menang</b>.
           Tempat 1 = Emas, 2 = Perak, 3 = Gangsa, tempat ke-4 turut direkodkan.
         </div>
+        <div class="section-label" style="margin-top:0;">Pilih Cepat Kategori</div>
+        <div class="cat-quick-grid" id="resultsCatQuickSelect"></div>
+
         <div class="grid-2">
           <div>
             <label for="resultsKategori">Kategori</label>
@@ -1074,7 +1150,27 @@ footer.app-footer{
 
         <div id="resultsOutputWrap" style="margin-top:18px;"></div>
       </div>
-    </div></div>
+    </div>
+
+    <div class="panel no-print" style="border-color:var(--gold);">
+      <div class="panel-head">
+        <h2 style="color:#8a6d00;">Olahragawan &amp; Olahragawati</h2>
+        <button class="btn btn-ghost btn-sm" onclick="renderOlahragawanPanel()">Kira Semula</button>
+      </div>
+      <div class="panel-body">
+        <div class="field-note" style="margin-bottom:14px;">
+          Dikira automatik berdasarkan: <b>1) Jumlah pingat Emas terbanyak</b>, seterusnya pemisah seri ikut turutan —
+          <b>2) jarak terjauh</b>, <b>3) masa terpantas (acara individu)</b>, <b>4) masa terpantas (acara berpasukan)</b>.
+          Berasingan bagi Sekolah Rendah dan Sekolah Menengah.
+        </div>
+        <div class="grid-2" style="gap:14px;">
+          <div id="olahragawanSK_L"></div>
+          <div id="olahragawanSK_P"></div>
+          <div id="olahragawanSM_L"></div>
+          <div id="olahragawanSM_P"></div>
+        </div>
+      </div>
+    </div></div></div>
 
     <div class="panel no-print">
       <div class="panel-head"><h2>Tetapan Pangkalan Data Pusat (Google Sheet)</h2></div>
@@ -1541,7 +1637,7 @@ function formatLockoutRemaining(ms){
    2. Extensions > Apps Script > tampal kandungan fail Code.gs yang disertakan.
    3. Deploy > New deployment > Web app > Execute as: Me > Who has access: Anyone.
    4. Salin URL Web App yang dijana, gantikan nilai di bawah. */
-const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz6r5wb7BHUCkAFh6NATpt8HJtiOGGtJdt__41tUgPVaog86_9HUhgJIKTZaVLQT8RXMA/exec";
+const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz4YPZ1tNGnCvEX0h8BqEcIgMiZ3W7XZhJ8nOxh3vQe-RBHl-TYphzSlVZHF5nkLUDfIw/exec";
 
 /* Kunci rahsia API — MESTI SAMA PERSIS dengan API_SECRET dalam Code.gs.
    Ini disertakan pada setiap permintaan simpan/padam/reset supaya
@@ -1858,8 +1954,8 @@ function switchRoleTab(role){
   document.getElementById("panelStatistik").classList.toggle("active", role==="statistik");
 }
 
-function populateSchoolSelect(){
-  const sel = document.getElementById("inpSekolah");
+function populateSchoolSelect(targetId){
+  const sel = document.getElementById(targetId || "inpSekolah");
   sel.innerHTML = "";
   const groups = {};
   SCHOOLS.forEach((s,idx)=>{
@@ -1880,7 +1976,7 @@ let isFirstTimeRegistration = false;
 
 async function doLogin(){
   const idxRaw = document.getElementById("inpSekolah").value;
-  const enteredPw = document.getElementById("inpPassword").value.trim();
+  const enteredPhone = document.getElementById("inpPassword").value.trim();
   const errEl = document.getElementById("loginError");
   const btn = document.getElementById("btnLogin");
 
@@ -1889,90 +1985,47 @@ async function doLogin(){
     errEl.classList.add("show");
     return;
   }
-  if(enteredPw === ""){
-    errEl.textContent = "Sila masukkan nombor telefon pengurus pasukan.";
-    errEl.classList.add("show");
-    return;
-  }
-  const idx = parseInt(idxRaw, 10);
-  const scope = "school_" + idx;
-  const lockRemaining = checkLoginLockout(scope);
-  if(lockRemaining > 0){
-    errEl.textContent = "Terlalu banyak percubaan gagal. Sila cuba lagi selepas " + formatLockoutRemaining(lockRemaining) + ".";
-    errEl.classList.add("show");
-    return;
-  }
-
-  const school = SCHOOLS[idx];
-  currentSchoolLabel = school.name;
-  currentSchool = normaliseSchool(currentSchoolLabel);
-
-  // Semak sama ada sekolah ini SUDAH berdaftar (nombor telefon sedia ada),
-  // keutamaan pada data Google Sheet (pusat) supaya konsisten semua peranti.
-  let localData = loadSchoolData(currentSchool);
-  let sheetSchoolData = null;
-
-  const originalHtml = btn.innerHTML;
-  if(isGasConfigured()){
-    btn.disabled = true;
-    btn.innerHTML = "Menyemak pendaftaran...";
-    sheetSchoolData = await fetchSchoolFromSheet(currentSchoolLabel, 8000);
-    btn.disabled = false;
-    btn.innerHTML = originalHtml;
-  }
-
-  const authoritative = (sheetSchoolData && sheetSchoolData.pengurus.tel) ? sheetSchoolData : localData;
-  const existingTel = (authoritative.pengurus.tel || "").trim();
-
-  if(existingTel === ""){
-    // ==== PENDAFTARAN KALI PERTAMA untuk sekolah ini ====
-    if(enteredPw.replace(/\D/g,"").length < 8){
-      errEl.textContent = "Sekolah ini belum berdaftar. Masukkan nombor telefon sah (sekurang-kurangnya 8 digit) untuk mendaftar buat kali pertama.";
-      errEl.classList.add("show");
-      return;
-    }
-    errEl.classList.remove("show");
-    clearLoginAttempts(scope);
-
-    schoolData = localData;
-    schoolData.pengurus.tel = enteredPw;
-    unsavedChanges = false;
-    localStorage.setItem("kejohanan2026_session", JSON.stringify({school:currentSchoolLabel, key:currentSchool}));
-
-    isFirstTimeRegistration = true;
-    document.getElementById("inpPengurusNama").value = schoolData.pengurus.nama || "";
-    document.getElementById("inpPengurusTel").value = enteredPw;
-    document.getElementById("pengurusFirstTimeNote").style.display = "block";
-    document.getElementById("pengurusError").classList.remove("show");
-    document.getElementById("pengurusModal").classList.add("show");
-    return;
-  }
-
-  // ==== SEKOLAH SUDAH BERDAFTAR — sahkan kata laluan (nombor telefon) ====
-  if(normalizePhone(enteredPw) !== normalizePhone(existingTel)){
-    const state = recordFailedLogin(scope);
-    const remainingAttempts = MAX_LOGIN_ATTEMPTS - state.count;
-    errEl.textContent = remainingAttempts > 0
-      ? "Nombor telefon (kata laluan) salah. (" + remainingAttempts + " percubaan lagi sebelum disekat sementara)"
-      : "Terlalu banyak percubaan gagal. Sila cuba lagi selepas " + formatLockoutRemaining(LOGIN_LOCKOUT_MS) + ".";
+  const normalizedPhone = normalizePhone(enteredPhone);
+  if(normalizedPhone.length < 8){
+    errEl.textContent = "Sila masukkan nombor telefon yang sah (sekurang-kurangnya 8 digit).";
     errEl.classList.add("show");
     return;
   }
   errEl.classList.remove("show");
-  clearLoginAttempts(scope);
 
-  schoolData = authoritative;
-  persistSchoolData();
+  const idx = parseInt(idxRaw, 10);
+  const school = SCHOOLS[idx];
+  currentSchoolLabel = school.name;
+  currentSchool = normaliseSchool(currentSchoolLabel);
+
+  // Tarik data terkini sekolah ini (jika ada) supaya senarai peserta sedia ada
+  // terus kelihatan tidak kira peranti/pelayar mana pengurus log masuk.
+  let data = loadSchoolData(currentSchool);
+  const originalHtml = btn.innerHTML;
+  if(isGasConfigured()){
+    btn.disabled = true;
+    btn.innerHTML = "Memuatkan data sekolah...";
+    const sheetData = await fetchSchoolFromSheet(currentSchoolLabel, 8000);
+    btn.disabled = false;
+    btn.innerHTML = originalHtml;
+    if(sheetData) data = sheetData;
+  }
+
+  data.pengurus.tel = normalizedPhone;
+  schoolData = data;
   unsavedChanges = false;
   localStorage.setItem("kejohanan2026_session", JSON.stringify({school:currentSchoolLabel, key:currentSchool}));
+  persistSchoolData();
 
-  isFirstTimeRegistration = false;
   if(!schoolData.pengurus.nama){
+    isFirstTimeRegistration = true;
     document.getElementById("inpPengurusNama").value = "";
-    document.getElementById("inpPengurusTel").value = schoolData.pengurus.tel;
-    document.getElementById("pengurusFirstTimeNote").style.display = "none";
+    document.getElementById("inpPengurusTel").value = normalizedPhone;
+    document.getElementById("pengurusFirstTimeNote").style.display = "block";
+    document.getElementById("pengurusError").classList.remove("show");
     document.getElementById("pengurusModal").classList.add("show");
   } else {
+    isFirstTimeRegistration = false;
     enterApp();
   }
 }
@@ -2067,6 +2120,7 @@ async function loadStatistikData(){
   if(isGasConfigured()) await fetchResultsFromSheet();
   renderMedalTable("medalTableSKStatistik", buildMedalTally("SK"));
   renderMedalTable("medalTableSMStatistik", buildMedalTally("SM"));
+  renderOlahragawanPanel();
 }
 
 async function savePengurus(){
@@ -2850,6 +2904,7 @@ async function loadAdminData(){
 
   populateResultsKategoriSelect();
   if(isGasConfigured()) await fetchResultsFromSheet();
+  renderOlahragawanPanel();
 }
 
 /* =========================================================
@@ -2902,6 +2957,34 @@ function populateResultsKategoriSelect(){
     opt.textContent = CATEGORY_META[key].label;
     sel.appendChild(opt);
   });
+  renderResultsCatQuickSelect();
+}
+
+function renderResultsCatQuickSelect(){
+  const wrap = document.getElementById("resultsCatQuickSelect");
+  if(!wrap) return;
+  const all = getAllSchoolsData();
+  const counts = {};
+  Object.keys(CATEGORY_META).forEach(k=>counts[k]=0);
+  all.forEach(x=> x.data.peserta.forEach(p=> counts[p.kategori] = (counts[p.kategori]||0)+1));
+  const currentVal = document.getElementById("resultsKategori").value;
+  wrap.innerHTML = Object.keys(CATEGORY_META).map(k=>{
+    const meta = CATEGORY_META[k];
+    const isActive = k === currentVal ? " active" : "";
+    return `<div class="cat-card cat-${k}${isActive}" onclick="selectResultsCategory('${k}')">
+      <div class="cc-num">${counts[k]}</div>
+      <div class="cc-label">${meta.label}</div>
+    </div>`;
+  }).join("");
+}
+
+function selectResultsCategory(kategori){
+  const sel = document.getElementById("resultsKategori");
+  sel.value = kategori;
+  onResultsKategoriChange();
+  document.querySelectorAll("#resultsCatQuickSelect .cat-card").forEach(c=>c.classList.remove("active"));
+  const clicked = document.querySelector(`#resultsCatQuickSelect .cat-${kategori}`);
+  if(clicked) clicked.classList.add("active");
 }
 
 function onResultsKategoriChange(){
@@ -2975,6 +3058,16 @@ function getResultEntries(kategori, type, baseName, jantina){
   return entries;
 }
 
+const HEAT_SIZE = 8;
+const HEAT_TRACK_EVENTS = ["50M","80M","100M","200M"];
+let heatState = null;
+
+function shouldUseHeats(entries, type, baseName){
+  if(entries.length <= HEAT_SIZE) return false;
+  if(type === "KUM") return true;
+  return HEAT_TRACK_EVENTS.includes(baseName);
+}
+
 function onResultsAcaraChange(){
   const val = document.getElementById("resultsAcara").value;
   const wrap = document.getElementById("resultsEntryWrap");
@@ -2986,6 +3079,7 @@ function onResultsAcaraChange(){
   calcBtn.style.display = "none";
   hint.textContent = "";
   currentResultsContext = null;
+  heatState = null;
   if(!val) return;
 
   const parts = val.split("|");
@@ -3012,26 +3106,133 @@ function onResultsAcaraChange(){
 
   currentResultsContext = { kategori, type, baseName, isPadang, entries, jantinaGroup };
 
-  const existingKey = kategori + "||" + baseName + "||" + jantinaGroup;
+  if(shouldUseHeats(entries, type, baseName)){
+    renderHeatMode();
+  } else {
+    renderFinalEntryList();
+  }
+}
+
+function renderFinalEntryList(){
+  const ctx = currentResultsContext;
+  const wrap = document.getElementById("resultsEntryWrap");
+  const calcBtn = document.getElementById("btnCalcResults");
+  const existingKey = ctx.kategori + "||" + ctx.baseName + "||" + ctx.jantinaGroup;
   const existingResults = resultsDataCache[existingKey] || [];
   const existingByKey = {};
   existingResults.forEach(r=>{ existingByKey[r.entryKey] = r; });
 
-  wrap.innerHTML = entries.map(en=>{
+  let headerNote = "";
+  if(heatState){
+    headerNote = '<div class="field-note" style="margin-bottom:10px;"><b>Pusingan Akhir</b> — ' + ctx.entries.length + ' peserta/pasukan layak daripada saringan.</div>';
+  }
+
+  wrap.innerHTML = headerNote + ctx.entries.map(en=>{
     const existing = existingByKey[en.entryKey];
     const valStr = existing ? existing.nilai : "";
     return `
       <div class="results-entry-row">
         <div class="re-label">${escapeHtml(en.label)}<span class="re-school">${escapeHtml(en.sekolah)}</span></div>
-        <input type="number" step="0.01" placeholder="${isPadang?'meter':'saat'}" data-entry-key="${en.entryKey}" value="${valStr}">
+        <input type="number" step="0.01" placeholder="${ctx.isPadang?'meter':'saat'}" data-entry-key="${en.entryKey}" value="${valStr}">
       </div>`;
   }).join("");
 
   calcBtn.style.display = "inline-flex";
 
   if(existingResults.length){
-    renderResultsOutput(existingResults, isPadang, baseName, kategori, jantinaGroup);
+    renderResultsOutput(existingResults, ctx.isPadang, ctx.baseName, ctx.kategori, ctx.jantinaGroup);
   }
+}
+
+/* =========================================================
+   MOD SARINGAN (HEATS) — untuk 50M/80M/100M/200M & semua acara
+   berpasukan bila peserta/pasukan melebihi 8 (had laluan padang).
+   ========================================================= */
+function renderHeatMode(){
+  const wrap = document.getElementById("resultsEntryWrap");
+  const calcBtn = document.getElementById("btnCalcResults");
+  const outputWrap = document.getElementById("resultsOutputWrap");
+  calcBtn.style.display = "none";
+  outputWrap.innerHTML = "";
+
+  const ctx = currentResultsContext;
+  const entries = ctx.entries;
+  const numHeats = Math.ceil(entries.length / HEAT_SIZE);
+
+  if(!heatState){
+    const heats = [];
+    for(let i=0;i<numHeats;i++){
+      heats.push(entries.slice(i*HEAT_SIZE, (i+1)*HEAT_SIZE).map(en=>({
+        entryKey:en.entryKey, label:en.label, sekolah:en.sekolah, nilai:null, rank:null, advancing:false
+      })));
+    }
+    heatState = { heats };
+  }
+
+  let html = `<div class="field-note" style="margin-bottom:12px;">
+    <b>${entries.length} peserta/pasukan didaftarkan \u2014 melebihi had 8 setiap saringan, dibahagikan kepada ${numHeats} saringan.</b>
+    Masukkan ${ctx.isPadang ? "jarak" : "masa"} setiap saringan, klik "Auto Susun", tandakan yang layak ke Pusingan Akhir, kemudian sahkan di bawah.
+  </div>`;
+
+  heatState.heats.forEach((heat, hIdx)=>{
+    html += `<div class="heat-card">
+      <div class="heat-title">Saringan ${hIdx+1}</div>
+      ${heat.map((en,eIdx)=>`
+        <div class="results-entry-row">
+          <input type="checkbox" class="heat-advance-cb" data-heat="${hIdx}" data-idx="${eIdx}" ${en.advancing?"checked":""} title="Layak ke Pusingan Akhir">
+          <div class="re-label">${en.rank?`<span class="heat-rank">#${en.rank}</span>`:""}${escapeHtml(en.label)}<span class="re-school">${escapeHtml(en.sekolah)}</span></div>
+          <input type="number" step="0.01" class="heat-time-input" data-heat="${hIdx}" data-idx="${eIdx}" value="${en.nilai===null?'':en.nilai}" placeholder="${ctx.isPadang?'meter':'saat'}">
+        </div>`).join("")}
+      <button class="btn btn-ghost btn-sm" style="margin-top:6px;" onclick="autoSortHeat(${hIdx})">Auto Susun Saringan ${hIdx+1}</button>
+    </div>`;
+  });
+
+  html += `<button class="btn btn-primary btn-sm" style="margin-top:8px;" onclick="confirmHeatAdvancers()">Sahkan Saringan &rarr; Pusingan Akhir</button>`;
+
+  wrap.innerHTML = html;
+
+  wrap.querySelectorAll(".heat-time-input").forEach(inp=>{
+    inp.addEventListener("input", ()=>{
+      const h = parseInt(inp.dataset.heat,10), i = parseInt(inp.dataset.idx,10);
+      heatState.heats[h][i].nilai = inp.value === "" ? null : parseFloat(inp.value);
+    });
+  });
+  wrap.querySelectorAll(".heat-advance-cb").forEach(cb=>{
+    cb.addEventListener("change", ()=>{
+      const h = parseInt(cb.dataset.heat,10), i = parseInt(cb.dataset.idx,10);
+      heatState.heats[h][i].advancing = cb.checked;
+    });
+  });
+}
+
+function autoSortHeat(heatIdx){
+  const ctx = currentResultsContext;
+  const heat = heatState.heats[heatIdx];
+  heat.sort((a,b)=>{
+    const av = a.nilai===null ? (ctx.isPadang?-Infinity:Infinity) : a.nilai;
+    const bv = b.nilai===null ? (ctx.isPadang?-Infinity:Infinity) : b.nilai;
+    return ctx.isPadang ? (bv-av) : (av-bv);
+  });
+  heat.forEach((en,idx)=>{ en.rank = idx+1; });
+  renderHeatMode();
+  showToast("Saringan " + (heatIdx+1) + " disusun automatik.", "ok");
+}
+
+function confirmHeatAdvancers(){
+  const advancers = [];
+  heatState.heats.forEach(heat=>{
+    heat.forEach(en=>{
+      if(en.advancing) advancers.push({ entryKey:en.entryKey, label:en.label, sekolah:en.sekolah });
+    });
+  });
+  if(advancers.length === 0){
+    showToast("Sila tandakan sekurang-kurangnya seorang/satu pasukan untuk ke Pusingan Akhir.", "warn");
+    return;
+  }
+  currentResultsContext.entries = advancers;
+  heatState = null;
+  renderFinalEntryList();
+  showToast(advancers.length + " peserta/pasukan layak ke Pusingan Akhir.", "ok");
 }
 
 async function calculateAndSaveResults(){
@@ -3107,6 +3308,102 @@ function renderResultsOutput(sortedEntries, isPadang, baseName, kategori, jantin
       </div>`;
   }).join("");
   wrap.innerHTML = header + rows;
+
+  if(document.getElementById("olahragawanSK_L")) renderOlahragawanPanel();
+}
+
+/* =========================================================
+   OLAHRAGAWAN / OLAHRAGAWATI
+   Kriteria (mengikut turutan pemisah seri):
+   1) Jumlah pingat Emas terbanyak (acara individu sahaja)
+   2) Jarak terjauh (acara padang)
+   3) Masa terpantas (acara individu balapan)
+   4) Masa terpantas (acara berpasukan yang disertai)
+   Dikira berasingan untuk Sekolah Rendah (SK) & Sekolah Menengah (SM).
+   ========================================================= */
+function buildAthleteStats(peringkat, jantina){
+  const athletes = {};
+  Object.keys(resultsDataCache).forEach(key=>{
+    const parts = key.split("||");
+    const kategori = parts[0], acara = parts[1], jantinaKey = parts[2];
+    if(!CATEGORY_META[kategori] || CATEGORY_META[kategori].peringkat !== peringkat) return;
+    if(jantinaKey !== jantina) return; // acara individu sahaja (kumpulan guna MIX, tak termasuk terus di sini)
+    const isPadang = PADANG_EVENTS.includes(acara);
+    (resultsDataCache[key] || []).forEach(r=>{
+      if(!athletes[r.entryKey]){
+        athletes[r.entryKey] = { entryKey:r.entryKey, label:r.label, sekolah:r.sekolah, kategori, golds:0, bestDistance:null, bestTime:null, bestTeamTime:null };
+      }
+      const a = athletes[r.entryKey];
+      if(r.pingat === "Emas") a.golds++;
+      if(isPadang){
+        if(a.bestDistance===null || r.nilai > a.bestDistance) a.bestDistance = r.nilai;
+      } else {
+        if(a.bestTime===null || r.nilai < a.bestTime) a.bestTime = r.nilai;
+      }
+    });
+  });
+
+  // pemisah seri ke-4: masa terpantas acara berpasukan yang disertai peserta ini
+  const all = getAllSchoolsData();
+  Object.values(athletes).forEach(a=>{
+    all.forEach(x=>{
+      const p = x.data.peserta.find(pp=>pp.id === a.entryKey);
+      if(!p || !p.kumpulan || !p.kumpulan.length) return;
+      p.kumpulan.forEach(evFull=>{
+        const baseName = evFull.split(" — ")[0];
+        const resKey = p.kategori + "||" + baseName + "||MIX";
+        const entryKey = x.school.name + "|" + evFull;
+        const found = (resultsDataCache[resKey] || []).find(r=>r.entryKey === entryKey);
+        if(found && (a.bestTeamTime===null || found.nilai < a.bestTeamTime)) a.bestTeamTime = found.nilai;
+      });
+    });
+  });
+
+  const list = Object.values(athletes);
+  list.sort((a,b)=>{
+    if(b.golds !== a.golds) return b.golds - a.golds;
+    const ad = a.bestDistance===null ? -Infinity : a.bestDistance;
+    const bd = b.bestDistance===null ? -Infinity : b.bestDistance;
+    if(bd !== ad) return bd - ad;
+    const at = a.bestTime===null ? Infinity : a.bestTime;
+    const bt = b.bestTime===null ? Infinity : b.bestTime;
+    if(at !== bt) return at - bt;
+    const att = a.bestTeamTime===null ? Infinity : a.bestTeamTime;
+    const btt = b.bestTeamTime===null ? Infinity : b.bestTeamTime;
+    return att - btt;
+  });
+  return list;
+}
+
+function renderOlahragawanPanel(){
+  const combos = [
+    { slot:"olahragawanSK_L", peringkat:"SK", jantina:"L", title:"Olahragawan (Sekolah Rendah)" },
+    { slot:"olahragawanSK_P", peringkat:"SK", jantina:"P", title:"Olahragawati (Sekolah Rendah)" },
+    { slot:"olahragawanSM_L", peringkat:"SM", jantina:"L", title:"Olahragawan (Sekolah Menengah)" },
+    { slot:"olahragawanSM_P", peringkat:"SM", jantina:"P", title:"Olahragawati (Sekolah Menengah)" }
+  ];
+  combos.forEach(c=>{
+    const el = document.getElementById(c.slot);
+    if(!el) return;
+    const list = buildAthleteStats(c.peringkat, c.jantina);
+    if(list.length === 0){
+      el.innerHTML = `<div class="olahragawan-card"><div class="oc-title">${c.title}</div><div class="oc-empty">Belum ada keputusan direkodkan.</div></div>`;
+      return;
+    }
+    const top = list[0];
+    const statsParts = [];
+    statsParts.push(top.golds + " pingat Emas");
+    if(top.bestDistance !== null) statsParts.push("Jarak terbaik: " + top.bestDistance + "m");
+    if(top.bestTime !== null) statsParts.push("Masa terpantas: " + top.bestTime + "s");
+    if(top.bestTeamTime !== null) statsParts.push("Masa berpasukan terbaik: " + top.bestTeamTime + "s");
+    el.innerHTML = `
+      <div class="olahragawan-card">
+        <div class="oc-title">${c.title}</div>
+        <div class="oc-name">${escapeHtml(top.label)}</div>
+        <div class="oc-school">${escapeHtml(top.sekolah)} &middot; ${escapeHtml(CATEGORY_META[top.kategori].label)}</div>
+        <div class="oc-stats">${statsParts.join(" &middot; ")}</div>
+      </div>`;
+  });
 }
 
 let pendingResetSchoolName = null;
@@ -3290,6 +3587,19 @@ function renderAdminStats(){
   document.getElementById("adminStatKumpulan").textContent = completeTeams;
 }
 
+function jumpAdminTableToCategory(kategori){
+  const sel = document.getElementById("adminFilterKategori");
+  if(sel){
+    sel.value = kategori;
+    renderAdminTable();
+  }
+  document.querySelectorAll(".cat-card").forEach(c=>c.classList.remove("active"));
+  const clicked = document.querySelector(`#adminKategoriBreakdown .cat-${kategori}`);
+  if(clicked) clicked.classList.add("active");
+  const tableSection = document.getElementById("adminTblBody");
+  if(tableSection) tableSection.scrollIntoView({behavior:"smooth", block:"center"});
+}
+
 function renderAdminKategoriBreakdown(){
   const all = getAllSchoolsData();
   const counts = {};
@@ -3298,9 +3608,9 @@ function renderAdminKategoriBreakdown(){
   const wrap = document.getElementById("adminKategoriBreakdown");
   wrap.innerHTML = Object.keys(CATEGORY_META).map(k=>{
     const meta = CATEGORY_META[k];
-    return `<div class="stat-card" style="padding:12px 14px;">
-      <div class="num" style="font-size:28px;">${counts[k]}</div>
-      <div class="lbl">${meta.label}</div>
+    return `<div class="cat-card cat-${k}" onclick="jumpAdminTableToCategory('${k}')" title="Klik untuk tapis senarai peserta ikut kategori ini">
+      <div class="cc-num">${counts[k]}</div>
+      <div class="cc-label">${meta.label}</div>
     </div>`;
   }).join("");
 }
@@ -3599,7 +3909,7 @@ setInterval(()=>{
 /* =========================================================
    INIT
    ========================================================= */
-populateSchoolSelect();
+populateSchoolSelect("inpSekolah");
 loadResultsCacheFromLocal();
 tryRestoreSession();
 loadPublicStats(); loadPublicResults();
