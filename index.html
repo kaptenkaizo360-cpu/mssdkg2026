@@ -1447,7 +1447,7 @@ function formatLockoutRemaining(ms){
    2. Extensions > Apps Script > tampal kandungan fail Code.gs yang disertakan.
    3. Deploy > New deployment > Web app > Execute as: Me > Who has access: Anyone.
    4. Salin URL Web App yang dijana, gantikan nilai di bawah. */
-const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz9fsq9nT5JaZkXg-xTep-Mf_OIWfcMsNH77c5lIDOPkqx1jYFpLw5YFZA9qbpsY05FgQ/exec";
+const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyitb7sVhEWw2OMiBdS56aWAOo2kXZXCHbF6YAqPwYWqCdApuQoe5morZolSmmu0TorhQ/exec";
 
 /* Kunci rahsia API — MESTI SAMA PERSIS dengan API_SECRET dalam Code.gs.
    Ini disertakan pada setiap permintaan simpan/padam/reset supaya
@@ -2129,7 +2129,8 @@ function currentEditingId(){
 const INDIVIDU_QUOTA_PADANG = 10;
 const INDIVIDU_QUOTA_OTHER = 4;
 
-function getIndividuQuota(eventName){
+function getIndividuQuota(eventName, kategori){
+  if(kategori === "PRA") return Infinity; // Pra PPKI Terbuka — tiada had sekolah untuk acara individu
   return PADANG_EVENTS.includes(eventName) ? INDIVIDU_QUOTA_PADANG : INDIVIDU_QUOTA_OTHER;
 }
 
@@ -2164,11 +2165,13 @@ function renderEventCheckboxes(){
     label.className = "event-check";
     const checked = selectedIndividu.includes(evName);
     let disabled = false;
-    const quota = getIndividuQuota(evName);
+    const quota = getIndividuQuota(evName, kategori);
     const count = padangCountForSchool(evName, excludeId);
     const full = count >= quota && !checked;
     if(full){ disabled = true; }
-    const hint = "Jumlah didaftarkan sekolah ini: " + count + " peserta (had maksimum " + quota + (isPadang ? ", acara padang" : "") + ")";
+    const hint = isFinite(quota)
+      ? "Jumlah didaftarkan sekolah ini: " + count + " peserta (had maksimum " + quota + (isPadang ? ", acara padang" : "") + ")"
+      : "Jumlah didaftarkan sekolah ini: " + count + " peserta (tiada had — Pra PPKI Terbuka)";
     if(checked) label.classList.add("checked");
     if(disabled) label.classList.add("disabled");
     label.innerHTML = `
@@ -2343,7 +2346,7 @@ async function savePeserta(){
 
   // sahkan semula kuota acara individu (padang & balapan) semasa simpan
   for(const evName of individu){
-    const quota = getIndividuQuota(evName);
+    const quota = getIndividuQuota(evName, kategori);
     const count = padangCountForSchool(evName, id);
     if(count >= quota){
       formErr.textContent = "Kuota acara '" + evName + "' untuk sekolah anda telah penuh (" + quota + "/" + quota + ").";
