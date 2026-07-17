@@ -586,6 +586,36 @@ tbody tr:hover{background:rgba(11,31,92,0.03);}
 .cat-quick-grid .cat-card .cc-num{font-size:20px;}
 .cat-quick-grid .cat-card .cc-label{font-size:10px;margin-top:3px;}
 
+.sched-row{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:8px 10px;
+  border-radius:8px;
+  margin-bottom:6px;
+}
+.sched-time{
+  font-family:'IBM Plex Mono',monospace;
+  font-weight:700;
+  font-size:12.5px;
+  min-width:52px;
+  flex-shrink:0;
+}
+.sched-acara{font-size:12.5px;font-weight:700;flex:1;}
+.sched-kat{font-size:10.5px;opacity:0.75;}
+.sched-break{
+  text-align:center;
+  font-size:11.5px;
+  font-weight:700;
+  color:var(--muted);
+  padding:8px;
+  border-top:1px dashed var(--line);
+  border-bottom:1px dashed var(--line);
+  margin:8px 0;
+  text-transform:uppercase;
+  letter-spacing:0.03em;
+}
+
 .cat-B8{background:#DCEBFF;color:#0B3C7A;}
 .cat-B10{background:#DDF5E4;color:#0F5C33;}
 .cat-B12{background:#FFF4D6;color:#7A5A00;}
@@ -1170,6 +1200,29 @@ footer.app-footer{
           <div id="olahragawanSM_P"></div>
         </div>
       </div>
+    </div>
+
+    <div class="panel no-print" style="border-color:var(--johor-blue);">
+      <div class="panel-head">
+        <h2 style="color:var(--johor-blue);">Atur Cara Kejohanan (Tentatif)</h2>
+        <span class="event-quota-tag">Rabu 22 &amp; Khamis 23 Julai 2026</span>
+      </div>
+      <div class="panel-body">
+        <div class="field-note" style="margin-bottom:14px;">
+          Susunan masa <b>tentatif</b> — tertakluk kepada perubahan bergantung bilangan peserta sebenar &amp; keadaan semasa hari kejohanan.
+          <b>Hari 1 (Rabu, 22 Julai)</b>: semua acara padang. <b>Hari 2 (Khamis, 23 Julai)</b>: semua acara balapan &amp; berpasukan.
+        </div>
+        <div class="grid-2" style="gap:18px;align-items:start;">
+          <div>
+            <div class="section-label" style="margin-top:0;">Hari 1 — Rabu, 22 Julai 2026 (Acara Padang)</div>
+            <div id="jadualHari1"></div>
+          </div>
+          <div>
+            <div class="section-label" style="margin-top:0;">Hari 2 — Khamis, 23 Julai 2026 (Acara Balapan &amp; Berpasukan)</div>
+            <div id="jadualHari2"></div>
+          </div>
+        </div>
+      </div>
     </div></div></div>
 
     <div class="panel no-print">
@@ -1584,8 +1637,8 @@ function normalizePhone(str){
 const ADMIN_ID = "admin";
 const ADMIN_PASSWORD = "kopkadmin";
 
-const STATISTIK_ID = "statistik";
-const STATISTIK_PASSWORD = "statistikkopk";
+const STATISTIK_ID = "kopk";
+const STATISTIK_PASSWORD = "kopk";
 
 /* =========================================================
    SEKATAN CUBAAN LOG MASUK (throttling)
@@ -1637,7 +1690,7 @@ function formatLockoutRemaining(ms){
    2. Extensions > Apps Script > tampal kandungan fail Code.gs yang disertakan.
    3. Deploy > New deployment > Web app > Execute as: Me > Who has access: Anyone.
    4. Salin URL Web App yang dijana, gantikan nilai di bawah. */
-const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz4YPZ1tNGnCvEX0h8BqEcIgMiZ3W7XZhJ8nOxh3vQe-RBHl-TYphzSlVZHF5nkLUDfIw/exec";
+const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxdK5X8EkCx65jiLjRyHyWzAoGBnuKf2Vp4O7jksRAWNbC2Ju4HuyNB73NiGl17FFqPOg/exec";
 
 /* Kunci rahsia API — MESTI SAMA PERSIS dengan API_SECRET dalam Code.gs.
    Ini disertakan pada setiap permintaan simpan/padam/reset supaya
@@ -2015,7 +2068,15 @@ async function doLogin(){
   schoolData = data;
   unsavedChanges = false;
   localStorage.setItem("kejohanan2026_session", JSON.stringify({school:currentSchoolLabel, key:currentSchool}));
+
+  const wasRepaired = repairDuplicateIds();
   persistSchoolData();
+  if(wasRepaired){
+    logAction("baik-pulih", currentSchoolLabel, "ID peserta berlanggar dikesan dan dibaiki automatik pada " + formatDateTime(new Date().toISOString()));
+    if(isGasConfigured() && schoolData.pengurus.nama){
+      saveToSheet(true);
+    }
+  }
 
   if(!schoolData.pengurus.nama){
     isFirstTimeRegistration = true;
@@ -2121,6 +2182,7 @@ async function loadStatistikData(){
   renderMedalTable("medalTableSKStatistik", buildMedalTally("SK"));
   renderMedalTable("medalTableSMStatistik", buildMedalTally("SM"));
   renderOlahragawanPanel();
+  renderEventSchedule();
 }
 
 async function savePengurus(){
@@ -2232,6 +2294,11 @@ function tryRestoreSession(){
     currentSchoolLabel = sess.school;
     schoolData = loadSchoolData(currentSchool);
     unsavedChanges = false;
+    const wasRepaired = repairDuplicateIds();
+    if(wasRepaired){
+      persistSchoolData();
+      logAction("baik-pulih", currentSchoolLabel, "ID peserta berlanggar dikesan dan dibaiki automatik pada " + formatDateTime(new Date().toISOString()));
+    }
     if(schoolData.pengurus.nama && schoolData.pengurus.tel){
       enterApp();
     }
@@ -2512,6 +2579,41 @@ function validateNoPeserta(rawValue, peringkat, excludeId){
   return null;
 }
 
+/* ID mesti unik SEBENARNYA — guna crypto.randomUUID() bila tersedia (peluang
+   langgar hampir sifar), dengan fallback rawak yang lebih kukuh untuk pelayar
+   lama, DAN semak semula ia tidak sudah wujud dalam senarai peserta sekolah
+   ini sebelum digunakan. Ini betulkan bug di mana 2 peserta didaftar dalam
+   milisaat yang sama boleh berkongsi ID yang sama (punca "klik Abu keluar
+   Fatimah" / rekod tertimpa / gagal disunting). */
+function generateUniqueId(){
+  let id;
+  let guard = 0;
+  do{
+    if(window.crypto && typeof crypto.randomUUID === "function"){
+      id = "p" + crypto.randomUUID();
+    } else {
+      id = "p" + Date.now() + "-" + Math.random().toString(36).slice(2,10) + Math.random().toString(36).slice(2,10);
+    }
+    guard++;
+  } while(schoolData.peserta.some(p=>p.id===id) && guard < 20);
+  return id;
+}
+
+/* Baiki pulih data sedia ada yang mungkin sudah tercemar ID berlanggar
+   (akibat bug lama). Dipanggil automatik selepas data sekolah dimuatkan. */
+function repairDuplicateIds(){
+  const seen = new Set();
+  let repaired = false;
+  schoolData.peserta.forEach(p=>{
+    if(!p.id || seen.has(p.id)){
+      p.id = generateUniqueId();
+      repaired = true;
+    }
+    seen.add(p.id);
+  });
+  return repaired;
+}
+
 async function savePeserta(){
   const id = currentEditingId();
   const nama = document.getElementById("fNama").value.trim();
@@ -2570,7 +2672,7 @@ async function savePeserta(){
   const nowIso = new Date().toISOString();
   const isEdit = !!id;
   const record = {
-    id: id || ("p" + Date.now() + Math.floor(Math.random()*1000)),
+    id: id || generateUniqueId(),
     nama, noOku, umur, jantina, kategori,
     noPeserta: noPesertaFinal,
     individu, kumpulan,
@@ -2874,6 +2976,47 @@ setInterval(()=>{
   }
 }, 45000);
 
+/* Imbas SEMUA sekolah bagi ID peserta berlanggar (bug lama) dan baiki
+   automatik + segerak semula ke Google Sheet jika perlu. Dipanggil setiap
+   kali Admin log masuk/muat semula, supaya sebarang data yang sudah
+   tercemar terus dibetulkan tanpa perlu campur tangan manual. */
+async function repairAllSchoolsDuplicateIds(){
+  const all = getAllSchoolsData();
+  let anyRepaired = false;
+  for(const x of all){
+    const seen = new Set();
+    let repaired = false;
+    x.data.peserta.forEach(p=>{
+      if(!p.id || seen.has(p.id)){
+        p.id = "p" + (window.crypto && crypto.randomUUID ? crypto.randomUUID() : (Date.now() + "-" + Math.random().toString(36).slice(2,10)));
+        repaired = true;
+      }
+      seen.add(p.id);
+    });
+    if(repaired){
+      anyRepaired = true;
+      try{ localStorage.setItem(storageKey(x.key), JSON.stringify(x.data)); }catch(e){ /* ignore */ }
+      if(isGasConfigured() && x.data.pengurus.nama){
+        try{
+          await fetch(GAS_WEB_APP_URL, {
+            method:"POST",
+            headers:{ "Content-Type":"text/plain;charset=utf-8" },
+            body: JSON.stringify({ action:"saveSchool", secret: API_SECRET, school: x.school.name, pengurus: x.data.pengurus, peserta: x.data.peserta })
+          });
+        }catch(err){ console.error("repairAllSchoolsDuplicateIds sync error:", err); }
+      }
+    }
+  }
+  if(anyRepaired){
+    sheetDataCache = null;
+    if(isGasConfigured()){
+      const fetched = await fetchAllFromSheet();
+      if(fetched) sheetDataCache = fetched;
+    }
+    showToast("Beberapa ID peserta berlanggar dikesan dan telah dibaiki automatik.", "warn");
+  }
+}
+
 async function loadAdminData(){
   const statusEl = document.getElementById("gasConfigStatus");
   const sourceEl = document.getElementById("sheetSyncStatus");
@@ -2895,6 +3038,7 @@ async function loadAdminData(){
   }
 
   populateAdminFilters();
+  await repairAllSchoolsDuplicateIds();
   renderAdminStats();
   renderAdminKategoriBreakdown();
   renderAdminAcaraBreakdown();
@@ -2905,6 +3049,7 @@ async function loadAdminData(){
   populateResultsKategoriSelect();
   if(isGasConfigured()) await fetchResultsFromSheet();
   renderOlahragawanPanel();
+  renderEventSchedule();
 }
 
 /* =========================================================
@@ -3373,6 +3518,109 @@ function buildAthleteStats(peringkat, jantina){
     return att - btt;
   });
   return list;
+}
+
+/* =========================================================
+   ATUR CARA KEJOHANAN (TENTATIF)
+   Hari 1 (Rabu 22 Julai): semua acara PADANG.
+   Hari 2 (Khamis 23 Julai): semua acara BALAPAN + BERPASUKAN.
+   Disusun mengikut masa tentatif, terus terbit daripada struktur acara
+   sebenar (EVENTS_BY_CATEGORY) supaya sentiasa tepat jika acara berubah.
+   ========================================================= */
+function buildEventScheduleItems(){
+  const padangItems = [];
+  const trekItems = [];
+  const catOrder = ["B8","B10","B12","B15","B19","SD_SR","SD_SM","PRA"];
+
+  /* Pengecualian khas — acara balapan ini dipindah ke Hari 1 (bersama acara
+     padang) atas permintaan, walaupun ia acara balapan/individu. */
+  const FORCE_DAY1 = [
+    { kategori:"B19", jantina:"P", acara:"100M" },
+    { kategori:"B19", jantina:"P", acara:"200M" },
+    { kategori:"B15", jantina:"P", acara:"200M" }
+  ];
+
+  catOrder.forEach(kat=>{
+    const conf = EVENTS_BY_CATEGORY[kat];
+    if(!conf) return;
+    const meta = CATEGORY_META[kat];
+
+    conf.individu.forEach(ev=>{
+      const isPadang = PADANG_EVENTS.includes(ev);
+      if(isPadang){
+        padangItems.push({ kategori:kat, katLabel:meta.label, acara:ev });
+        return;
+      }
+      const exceptions = FORCE_DAY1.filter(f=>f.kategori===kat && f.acara===ev);
+      if(exceptions.length === 0){
+        trekItems.push({ kategori:kat, katLabel:meta.label, acara:ev });
+        return;
+      }
+      // ada pengecualian jantina — asingkan Lelaki/Perempuan supaya jelas mana dipindah
+      const exceptedGenders = exceptions.map(f=>f.jantina);
+      ["L","P"].forEach(jan=>{
+        const janLabel = jan==="L" ? "Lelaki" : "Perempuan";
+        const item = { kategori:kat, katLabel:meta.label + " (" + janLabel + ")", acara:ev };
+        (exceptedGenders.includes(jan) ? padangItems : trekItems).push(item);
+      });
+    });
+
+    let kumList = conf.kumpulan.slice();
+    if(SHARED_4X50_CATEGORIES.includes(kat) && !kumList.includes(SHARED_4X50_EVENT)) kumList.unshift(SHARED_4X50_EVENT);
+    if(OPEN_KUMPULAN_CATEGORIES.includes(kat)) kumList.push(OPEN_KUMPULAN_EVENT);
+    kumList.forEach(ev=>{
+      trekItems.push({ kategori:kat, katLabel:meta.label, acara:ev });
+    });
+  });
+
+  return { padangItems, trekItems };
+}
+
+function minutesToTimeStr(mins){
+  const h = Math.floor(mins/60) % 24;
+  const m = mins % 60;
+  return String(h).padStart(2,"0") + ":" + String(m).padStart(2,"0");
+}
+
+function assignScheduleTimes(items, startMinutes, slotMinutes){
+  const LUNCH_START = 12*60 + 30;
+  const LUNCH_DUR = 60;
+  let current = startMinutes;
+  let lunchInserted = false;
+  const out = [];
+  items.forEach(item=>{
+    if(!lunchInserted && current >= LUNCH_START){
+      out.push({ isBreak:true, time: minutesToTimeStr(current), label:"Rehat & Makan Tengahari" });
+      current += LUNCH_DUR;
+      lunchInserted = true;
+    }
+    out.push({ ...item, time: minutesToTimeStr(current) });
+    current += slotMinutes;
+  });
+  return out;
+}
+
+function renderEventSchedule(){
+  const h1 = document.getElementById("jadualHari1");
+  const h2 = document.getElementById("jadualHari2");
+  if(!h1 || !h2) return;
+
+  const { padangItems, trekItems } = buildEventScheduleItems();
+  const day1 = assignScheduleTimes(padangItems, 8*60, 25);
+  const day2 = assignScheduleTimes(trekItems, 8*60, 18);
+
+  const renderList = (list)=> list.map(row=>{
+    if(row.isBreak){
+      return `<div class="sched-break">\u23F8 ${row.time} \u2014 ${row.label}</div>`;
+    }
+    return `<div class="sched-row cat-${row.kategori}">
+      <div class="sched-time">${row.time}</div>
+      <div><div class="sched-acara">${escapeHtml(row.acara)}</div><div class="sched-kat">${escapeHtml(row.katLabel)}</div></div>
+    </div>`;
+  }).join("");
+
+  h1.innerHTML = renderList(day1);
+  h2.innerHTML = renderList(day2);
 }
 
 function renderOlahragawanPanel(){
