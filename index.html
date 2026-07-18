@@ -2112,7 +2112,7 @@ function formatLockoutRemaining(ms){
    2. Extensions > Apps Script > tampal kandungan fail Code.gs yang disertakan.
    3. Deploy > New deployment > Web app > Execute as: Me > Who has access: Anyone.
    4. Salin URL Web App yang dijana, gantikan nilai di bawah. */
-const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzF9eXiHmytQG2YK9HR9njedlLJxvrdF0rearFPFLR1B1n7jTf2Dw2Qr0yJs4m1HG2lXg/exec";
+const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxTwGITKojedJuYMJfgMYFHw9MMwbnSRToaroFQpod46lbtgDYwAA3CzXFIGf2_RN4HgQ/exec";
 
 /* Kunci rahsia API — MESTI SAMA PERSIS dengan API_SECRET dalam Code.gs.
    Ini disertakan pada setiap permintaan simpan/padam/reset supaya
@@ -2395,20 +2395,26 @@ let bgMusicPlaying = false;
 let bgMusicTimer = null;
 
 const FANFARE_NOTES = [
-  // [frekuensi Hz, tempoh saat] — corak fanfare naik bersemangat, gaya major
-  [523.25,0.22],[523.25,0.22],[523.25,0.22],[659.25,0.45],
-  [587.33,0.22],[523.25,0.22],[659.25,0.22],[783.99,0.7],
-  [0,0.25],
-  [523.25,0.22],[523.25,0.22],[523.25,0.22],[659.25,0.45],
-  [587.33,0.22],[523.25,0.22],[783.99,0.22],[659.25,0.9],
-  [0,0.4]
+  // Melodi pembukaan "Eine kleine Nachtmusik" (Serenade No. 13, K. 525)
+  // karya W. A. Mozart (1756-1791) — domain awam, dijana semula sebagai
+  // nada ringkas (BUKAN rakaman sedia ada, tiada isu hak cipta).
+  [196.00,0.16],[293.66,0.16],[392.00,0.32],
+  [0,0.10],
+  [587.33,0.42],
+  [523.25,0.16],[493.88,0.16],[440.00,0.16],[392.00,0.5],
+  [0,0.3],
+  [196.00,0.16],[293.66,0.16],[392.00,0.32],
+  [0,0.10],
+  [587.33,0.2],[698.46,0.2],[783.99,0.42],
+  [698.46,0.16],[659.25,0.16],[587.33,0.16],[523.25,0.55],
+  [0,0.45]
 ];
 
 function playFanfareTone(freq, dur, startTime){
   if(freq === 0) return;
   const osc = bgMusicCtx.createOscillator();
   const gain = bgMusicCtx.createGain();
-  osc.type = "triangle";
+  osc.type = "sine";
   osc.frequency.value = freq;
   gain.gain.setValueAtTime(0, startTime);
   gain.gain.linearRampToValueAtTime(0.14, startTime + 0.02);
@@ -5031,7 +5037,7 @@ async function loadPublicStats(){
       chips.push(`<div class="public-stat-chip ${nextColor()}" style="cursor:pointer;" onclick="toggleStatChip(this,'${key}','P')" title="Klik untuk lihat senarai"><div class="num">${byG.P}</div><div class="lbl">${meta.label} (P)</div></div>`);
     }
   });
-  grid.innerHTML = chips.join("") + `<div id="statChipDetail" style="display:none;grid-column:1/-1;"></div>`;
+  grid.innerHTML = chips.join("");
 }
 
 async function ensurePublicRoster(){
@@ -5051,19 +5057,23 @@ async function ensurePublicRoster(){
 }
 
 async function toggleStatChip(el, kategori, jantina){
-  const detail = document.getElementById("statChipDetail");
-  const alreadyOpenFor = detail.dataset.forKey;
-  const key = kategori + "|" + jantina;
-  document.querySelectorAll(".public-stat-chip").forEach(c=>c.classList.remove("active"));
-  if(alreadyOpenFor === key){
-    detail.style.display = "none";
-    detail.dataset.forKey = "";
-    return;
-  }
-  el.classList.add("active");
-  detail.dataset.forKey = key;
-  detail.style.display = "block";
-  detail.innerHTML = `<div style="font-size:12px;font-style:italic;opacity:0.7;padding:8px 0;">Memuatkan senarai...</div>`;
+  const jantinaLabel = jantina === "L" ? "Lelaki" : jantina === "P" ? "Perempuan" : "";
+  const kategoriLabel = kategori === "ALL" ? "Semua Kategori" : CATEGORY_META[kategori].label;
+  document.getElementById("eventRosterTitle").textContent = kategoriLabel + (jantinaLabel ? " \u2014 " + jantinaLabel : "");
+
+  ["loginScreen","schedulePage","standingsPage","statsPage","app","adminApp","statistikApp"].forEach(id=>{
+    const pageEl = document.getElementById(id);
+    if(pageEl && getComputedStyle(pageEl).display !== "none") eventRosterReturnPage = id;
+  });
+
+  const body = document.getElementById("eventRosterBody");
+  body.innerHTML = `<div class="field-note">Memuatkan senarai...</div>`;
+
+  document.querySelectorAll("#loginScreen, #schedulePage, #standingsPage, #statsPage, #app, #adminApp, #statistikApp").forEach(pageEl=>{
+    if(pageEl.id !== "eventRosterPage") pageEl.style.display = "none";
+  });
+  document.getElementById("eventRosterPage").style.display = "block";
+  window.scrollTo({top:0, behavior:"instant"});
 
   const roster = await ensurePublicRoster();
   let filtered = roster;
@@ -5071,11 +5081,11 @@ async function toggleStatChip(el, kategori, jantina){
   if(jantina) filtered = filtered.filter(r=>r.jantina === jantina);
 
   if(filtered.length === 0){
-    detail.innerHTML = `<div style="font-size:12px;font-style:italic;opacity:0.7;padding:8px 0;">Tiada peserta didaftarkan untuk kategori ini.</div>`;
+    body.innerHTML = `<div class="field-note">Tiada peserta didaftarkan untuk kategori ini.</div>`;
     return;
   }
-  detail.innerHTML = `<div style="font-size:11.5px;background:rgba(0,0,0,0.03);border-radius:8px;padding:10px 12px;max-height:280px;overflow-y:auto;text-align:left;">` +
-    filtered.map((r,i)=>`<div style="padding:2px 0;">${i+1}. <b>${escapeHtml(r.nama)}</b> &mdash; ${escapeHtml(r.sekolah)}${r.jantina && kategori==="ALL" ? ' <span style="opacity:0.6;">('+(r.jantina==="L"?"L":"P")+')</span>' : ''}</div>`).join("") +
+  body.innerHTML = `<div style="font-size:13.5px;">` +
+    filtered.map((r,i)=>`<div class="results-entry-row" style="cursor:default;"><div class="re-label" style="flex:1;">${i+1}. <b>${escapeHtml(r.nama)}</b><span class="re-school">${escapeHtml(r.sekolah)}${r.jantina && kategori==="ALL" ? " \u00b7 "+(r.jantina==="L"?"Lelaki":"Perempuan") : ""}</span></div></div>`).join("") +
     `</div>`;
 }
 
