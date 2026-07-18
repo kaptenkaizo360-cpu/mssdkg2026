@@ -1134,18 +1134,6 @@ body.printing-form #printFormArea{display:block !important;padding:24px;}
       </button>
       <div class="standings-launcher-label">Statistik<br>Penyertaan</div>
     </div>
-    <div class="standings-launcher">
-      <button type="button" class="standings-fab fab-purple" onclick="requestStartListAccess('individu')" title="Start List Acara Individu (perlu log masuk)">
-        <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a8 8 0 0 1 16 0v1"/></svg>
-      </button>
-      <div class="standings-launcher-label">Start List<br>Individu</div>
-    </div>
-    <div class="standings-launcher">
-      <button type="button" class="standings-fab fab-purple" onclick="requestStartListAccess('kumpulan')" title="Start List Acara Berkumpulan (perlu log masuk)">
-        <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="7" r="3"/><circle cx="17" cy="7" r="3"/><path d="M2 21v-1a6 6 0 0 1 11-3.5"/><path d="M13 16.5A6 6 0 0 1 22 20v1"/></svg>
-      </button>
-      <div class="standings-launcher-label">Start List<br>Berkumpulan</div>
-    </div>
   </div>
   <div class="login-row">
     <div class="login-card">
@@ -1340,27 +1328,6 @@ body.printing-form #printFormArea{display:block !important;padding:24px;}
   </div>
 
   <footer class="app-footer no-print">Statistik Penyertaan &middot; MSSD Kluang</footer>
-</div>
-
-<!-- ================= MODAL AKSES START LIST ================= -->
-<div class="modal-overlay" id="startListAccessModal">
-  <div class="modal-box" style="width:min(400px,94vw);">
-    <div class="modal-head">
-      <h3>Akses Start List</h3>
-      <button class="modal-close" onclick="closeStartListAccessModal()">&times;</button>
-    </div>
-    <div class="modal-body">
-      <label for="inpStartListId">ID</label>
-      <input type="text" id="inpStartListId" placeholder="ID">
-      <label for="inpStartListPassword">Kata Laluan</label>
-      <input type="password" id="inpStartListPassword" placeholder="Kata laluan" onkeydown="if(event.key==='Enter')confirmStartListAccess()">
-      <div class="error-text" id="startListAccessError">ID atau kata laluan salah.</div>
-    </div>
-    <div class="modal-foot">
-      <button class="btn btn-ghost" onclick="closeStartListAccessModal()">Batal</button>
-      <button class="btn btn-primary" onclick="confirmStartListAccess()">Log Masuk</button>
-    </div>
-  </div>
 </div>
 
 <!-- ================= HALAMAN START LIST ACARA INDIVIDU ================= -->
@@ -2281,7 +2248,7 @@ function formatLockoutRemaining(ms){
    2. Extensions > Apps Script > tampal kandungan fail Code.gs yang disertakan.
    3. Deploy > New deployment > Web app > Execute as: Me > Who has access: Anyone.
    4. Salin URL Web App yang dijana, gantikan nilai di bawah. */
-const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbx9KgC4pyznmY8--eiIuk58wZ0jsw_m5bKkQjBCKAjvV35ce-o8yC66t-9Us-tbUp6erg/exec";
+const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxfprtBgwP9C69JuJzGcRrVN_CLHp2bS_lefDAAtu6bdwwG-9AJtvg8yijwtrrN-OUFIA/exec";
 
 /* Kunci rahsia API — MESTI SAMA PERSIS dengan API_SECRET dalam Code.gs.
    Ini disertakan pada setiap permintaan simpan/padam/reset supaya
@@ -3935,6 +3902,12 @@ function renderIndividuDashboard(){
           if(groups.length > 1){
             html += `<div class="startlist-heat-title">Acara Akhir ${gi+1}</div>`;
           }
+          const schoolCounts = {};
+          group.forEach(en=>{ schoolCounts[en.sekolah] = (schoolCounts[en.sekolah]||0)+1; });
+          const colliding = Object.keys(schoolCounts).filter(s=>schoolCounts[s] > MAX_SAME_SCHOOL_PER_HEAT);
+          if(colliding.length){
+            html += `<div class="error-text show" style="margin:4px 0;">\u26A0\uFE0F Sekolah tak dapat diagihkan sepenuhnya (terlalu sedikit sekolah/saringan): ${colliding.map(s=>escapeHtml(s)+" ("+schoolCounts[s]+")").join(", ")}. Guna modul Keputusan &amp; "Pindah ke" untuk susun manual jika perlu.</div>`;
+          }
           html += `<table class="startlist-table"><thead><tr><th style="width:50px;">No.</th><th>Nama</th><th>Sekolah</th></tr></thead><tbody>` +
             group.map((en,i)=>`<tr><td>${i+1}</td><td><b>${escapeHtml(en.label)}</b></td><td>${escapeHtml(en.sekolah)}</td></tr>`).join("") +
             `</tbody></table>`;
@@ -4689,44 +4662,6 @@ function openStandingsPage(){
 }
 
 let dashboardReturnPage = null;
-let pendingStartListTarget = null;
-
-function requestStartListAccess(target){
-  pendingStartListTarget = target;
-  document.getElementById("inpStartListId").value = "";
-  document.getElementById("inpStartListPassword").value = "";
-  document.getElementById("startListAccessError").classList.remove("show");
-  document.getElementById("startListAccessModal").classList.add("show");
-}
-
-function closeStartListAccessModal(){
-  document.getElementById("startListAccessModal").classList.remove("show");
-  pendingStartListTarget = null;
-}
-
-function confirmStartListAccess(){
-  const id = document.getElementById("inpStartListId").value.trim();
-  const pw = document.getElementById("inpStartListPassword").value;
-  const errEl = document.getElementById("startListAccessError");
-  if(id !== STATISTIK_ID || pw !== STATISTIK_PASSWORD){
-    errEl.textContent = "ID atau kata laluan salah.";
-    errEl.classList.add("show");
-    return;
-  }
-  errEl.classList.remove("show");
-  const target = pendingStartListTarget;
-  document.getElementById("startListAccessModal").classList.remove("show");
-  document.getElementById("loginScreen").style.display = "none";
-  if(target === "individu"){
-    document.getElementById("individuDashboardPage").style.display = "block";
-    renderIndividuDashboard();
-  } else {
-    document.getElementById("kumpulanDashboardPage").style.display = "block";
-    renderKumpulanDashboard();
-  }
-  dashboardReturnPage = "loginScreen";
-  window.scrollTo({top:0, behavior:"instant"});
-}
 
 
 function openIndividuDashboardPage(){
