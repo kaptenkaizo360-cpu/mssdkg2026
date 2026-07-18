@@ -1532,7 +1532,7 @@ body.printing-form #printFormArea{display:block !important;padding:24px;}
               <option value="">-- Pilih Kategori --</option>
             </select>
           </div>
-          <div>
+          <div id="resultsJantinaWrap">
             <label for="resultsJantina">Jantina</label>
             <select id="resultsJantina" onchange="onResultsAcaraChange()">
               <option value="L">Lelaki</option>
@@ -1569,6 +1569,32 @@ body.printing-form #printFormArea{display:block !important;padding:24px;}
           (borang hakim penamat untuk trek/berpasukan, borang khas untuk padang). Untuk pilih jenis borang lain (cth. Penjaga Masa/Hakim Lorong), guna pemilih Kategori/Jantina/Acara di atas.
         </div>
         <div style="overflow-x:auto;" id="allFormsListWrap"></div>
+      </div>
+    </div>
+
+    <div class="panel" style="border-color:var(--johor-blue);">
+      <div class="panel-head">
+        <h2 style="color:var(--johor-blue);">Dashboard Acara Individu (Semua Kategori)</h2>
+        <button class="btn btn-ghost btn-sm no-print" onclick="renderIndividuDashboard()">Muat Semula</button>
+      </div>
+      <div class="panel-body">
+        <div class="field-note" style="margin-bottom:12px;">
+          Senarai penuh SEMUA acara individu yang ada peserta berdaftar — Bawah 8 Tahun sehingga Pra PPKI Terbuka, diasingkan ikut kategori umur &amp; jantina, beserta nama peserta dan sekolah.
+        </div>
+        <div id="individuDashboardWrap"></div>
+      </div>
+    </div>
+
+    <div class="panel" style="border-color:var(--johor-blue);">
+      <div class="panel-head">
+        <h2 style="color:var(--johor-blue);">Dashboard Acara Berkumpulan (Semua Kategori)</h2>
+        <button class="btn btn-ghost btn-sm no-print" onclick="renderKumpulanDashboard()">Muat Semula</button>
+      </div>
+      <div class="panel-body">
+        <div class="field-note" style="margin-bottom:12px;">
+          Senarai penuh SEMUA acara berpasukan/relay yang ada pasukan berdaftar, beserta nama setiap atlet dalam pasukan tersebut.
+        </div>
+        <div id="kumpulanDashboardWrap"></div>
       </div>
     </div>
 
@@ -2112,7 +2138,7 @@ function formatLockoutRemaining(ms){
    2. Extensions > Apps Script > tampal kandungan fail Code.gs yang disertakan.
    3. Deploy > New deployment > Web app > Execute as: Me > Who has access: Anyone.
    4. Salin URL Web App yang dijana, gantikan nilai di bawah. */
-const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwYNcS9eW-XHspfLw7qrSum_xCDiLOmV1Efl1CbCZxkpHSmPgL27HiuEWujP8hp-XS80Q/exec";
+const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwNLRAr2KJZ0GoveMoPzN6anTzI695PQb9aC8gM2BBDNj9-fsMVcCDy07KmFhR8sc_zKg/exec";
 
 /* Kunci rahsia API — MESTI SAMA PERSIS dengan API_SECRET dalam Code.gs.
    Ini disertakan pada setiap permintaan simpan/padam/reset supaya
@@ -2634,6 +2660,8 @@ async function loadStatistikData(){
   renderMedalTable("medalTableSMStatistik", buildMedalTally("SM"));
   renderOlahragawanPanel();
   renderAllFormsList();
+  renderIndividuDashboard();
+  renderKumpulanDashboard();
   renderEventSchedule();
 }
 
@@ -3517,6 +3545,8 @@ async function loadAdminData(){
   if(isGasConfigured()) await fetchResultsFromSheet();
   renderOlahragawanPanel();
   renderAllFormsList();
+  renderIndividuDashboard();
+  renderKumpulanDashboard();
   renderEventSchedule();
 }
 
@@ -3652,6 +3682,7 @@ function getResultEntries(kategori, type, baseName, jantina){
     });
   } else {
     // Acara kumpulan (relay) sedia berpasukan campur (2L2P/4L4P) — tidak diasingkan ikut jantina.
+    // Kumpul juga NAMA setiap atlet dalam pasukan tersebut, bukan cuma nama pasukan.
     const seen = {};
     all.forEach(x=>{
       x.data.peserta.forEach(p=>{
@@ -3660,9 +3691,10 @@ function getResultEntries(kategori, type, baseName, jantina){
           if(evFull.indexOf(baseName) === 0){
             const key = x.school.name + "|" + evFull;
             if(!seen[key]){
-              seen[key] = true;
-              entries.push({ entryKey: key, label: evFull, sekolah: x.school.name });
+              seen[key] = { entryKey: key, label: evFull, sekolah: x.school.name, athletes: [] };
+              entries.push(seen[key]);
             }
+            seen[key].athletes.push(p.nama);
           }
         });
       });
@@ -3738,6 +3770,62 @@ function shouldUseHeats(entries, type, baseName){
    SENARAI SEMUA BORANG — satu tempat lihat & cetak borang bagi
    SEMUA acara yang ada peserta berdaftar, merentas semua kategori.
    ========================================================= */
+/* Dashboard penuh — semua acara INDIVIDU (Bawah 8 hingga Pra PPKI), ikut
+   kategori + jantina, terus papar nama peserta & sekolah (tiada perlu klik). */
+function renderIndividuDashboard(){
+  const wrap = document.getElementById("individuDashboardWrap");
+  if(!wrap) return;
+  let html = "";
+  let anyFound = false;
+  Object.keys(CATEGORY_META).forEach(kat=>{
+    const conf = EVENTS_BY_CATEGORY[kat];
+    if(!conf) return;
+    const meta = CATEGORY_META[kat];
+    conf.individu.forEach(ev=>{
+      ["L","P"].forEach(jantina=>{
+        const entries = getResultEntries(kat, "IND", ev, jantina);
+        if(entries.length === 0) return;
+        anyFound = true;
+        const janLabel = jantina === "L" ? "Lelaki" : "Perempuan";
+        html += `<div class="cat-card cat-${kat}" style="cursor:default;display:block;margin-bottom:10px;padding:12px 14px;">
+          <div class="cc-label" style="font-size:12px;margin-top:0;margin-bottom:6px;">${escapeHtml(meta.label)} \u2014 ${escapeHtml(ev)} (${janLabel}) <span class="event-quota-tag">${entries.length}</span></div>
+          <div style="font-size:12.5px;">${entries.map((en,i)=>`${i+1}. <b>${escapeHtml(en.label)}</b> \u2014 ${escapeHtml(en.sekolah)}`).join("<br>")}</div>
+        </div>`;
+      });
+    });
+  });
+  wrap.innerHTML = anyFound ? html : '<div class="field-note">Tiada peserta didaftarkan lagi untuk sebarang acara individu.</div>';
+}
+
+/* Dashboard penuh — semua acara BERKUMPULAN/relay merentas semua kategori,
+   terus papar nama setiap atlet dalam setiap pasukan (tiada perlu klik). */
+function renderKumpulanDashboard(){
+  const wrap = document.getElementById("kumpulanDashboardWrap");
+  if(!wrap) return;
+  let html = "";
+  let anyFound = false;
+  Object.keys(CATEGORY_META).forEach(kat=>{
+    const conf = EVENTS_BY_CATEGORY[kat];
+    if(!conf) return;
+    const meta = CATEGORY_META[kat];
+    let kumList = conf.kumpulan.slice();
+    if(SHARED_4X50_CATEGORIES.includes(kat) && !kumList.includes(SHARED_4X50_EVENT)) kumList.unshift(SHARED_4X50_EVENT);
+    if(OPEN_KUMPULAN_CATEGORIES.includes(kat)) kumList.push(OPEN_KUMPULAN_EVENT);
+    kumList.forEach(ev=>{
+      const entries = getResultEntries(kat, "KUM", ev, "");
+      if(entries.length === 0) return;
+      anyFound = true;
+      html += `<div class="cat-card cat-${kat}" style="cursor:default;display:block;margin-bottom:10px;padding:12px 14px;">
+        <div class="cc-label" style="font-size:12px;margin-top:0;margin-bottom:8px;">${escapeHtml(meta.label)} \u2014 ${escapeHtml(ev)} <span class="event-quota-tag">${entries.length} pasukan</span></div>
+        ${entries.map(en=>`<div style="margin-bottom:8px;font-size:12.5px;"><b>${escapeHtml(en.label)}</b> \u2014 ${escapeHtml(en.sekolah)}
+          <div style="margin-left:16px;margin-top:2px;">${(en.athletes||[]).map((a,ai)=>`${ai+1}. ${escapeHtml(a)}`).join("<br>")}</div>
+        </div>`).join("")}
+      </div>`;
+    });
+  });
+  wrap.innerHTML = anyFound ? html : '<div class="field-note">Tiada pasukan didaftarkan lagi untuk sebarang acara berkumpulan.</div>';
+}
+
 function renderAllFormsList(){
   const wrap = document.getElementById("allFormsListWrap");
   if(!wrap) return;
@@ -3845,7 +3933,7 @@ function updatePrintButtonsVisibility(){
 }
 
 const PRINT_FORM_META = {
-  penamat: { title:"BORANG HAKIM PENAMAT", cols:["No. Lorong/Bib","Nama","Sekolah","Kedudukan"] },
+  penamat: { title:"BORANG HAKIM PENAMAT", cols:["No. Lorong/Bib","Nama","Sekolah","Kedudukan","Catatan Masa"] },
   masa:    { title:"BORANG PENJAGA MASA", cols:["No. Lorong/Bib","Nama","Sekolah","Masa (saat)"] },
   lorong:  { title:"BORANG HAKIM LORONG", cols:["No. Lorong","Nama","Sekolah","Catatan"] },
   peluru:  { title:"BORANG LONTAR PELURU", cols:["Nama","Sekolah","Percubaan 1","Percubaan 2","Percubaan 3","Jarak Terbaik (m)"] },
@@ -3937,6 +4025,7 @@ function onResultsAcaraChange(){
   printBtns.innerHTML = "";
   currentResultsContext = null;
   heatState = null;
+  document.getElementById("resultsJantinaWrap").style.display = "block";
   if(!val) return;
 
   const parts = val.split("|");
@@ -3946,6 +4035,7 @@ function onResultsAcaraChange(){
   const jantina = document.getElementById("resultsJantina").value;
   const isPadang = type === "IND" && PADANG_EVENTS.includes(baseName);
   const jantinaGroup = type === "IND" ? jantina : "MIX";
+  document.getElementById("resultsJantinaWrap").style.display = (type === "IND") ? "block" : "none";
   hint.textContent = isPadang
     ? "Acara PADANG \u2014 masukkan JARAK (meter). Nombor PALING BESAR menang."
     : "Acara BALAPAN \u2014 masukkan MASA (saat). Nombor PALING KECIL (terpantas) menang.";
@@ -4381,7 +4471,15 @@ async function toggleScheduleDetail(rowId){
     body.innerHTML = `<div class="field-note">Belum ada peserta/pasukan didaftarkan untuk acara ini.</div>`;
   } else {
     body.innerHTML = `<div style="font-size:13.5px;">` +
-      entries.map((en,i)=>`<div class="results-entry-row" style="cursor:default;"><div class="re-label" style="flex:1;">${i+1}. <b>${escapeHtml(en.label)}</b><span class="re-school">${escapeHtml(en.sekolah)}</span></div></div>`).join("") +
+      entries.map((en,i)=>{
+        const athleteList = (en.athletes && en.athletes.length)
+          ? `<div style="margin:6px 0 4px 20px;font-size:12px;">` + en.athletes.map((a,ai)=>`<div style="padding:1px 0;">${ai+1}. ${escapeHtml(a)}</div>`).join("") + `</div>`
+          : "";
+        return `<div class="results-entry-row" style="cursor:default;flex-direction:column;align-items:stretch;">
+          <div class="re-label" style="flex:1;">${i+1}. <b>${escapeHtml(en.label)}</b><span class="re-school">${escapeHtml(en.sekolah)}</span></div>
+          ${athleteList}
+        </div>`;
+      }).join("") +
       `</div>`;
   }
 }
@@ -4405,17 +4503,13 @@ function renderEventSchedule(idSuffix){
   const day1 = assignScheduleTimes(padangItems, DAY_START, DAY_END);
   const day2 = assignScheduleTimes(trekItems, DAY_START, DAY_END);
 
-  window._scheduleRowData = window._scheduleRowData || {};
-
   const renderList = (list, dayTag)=> list.map((row,idx)=>{
     if(row.isBreak){
       return `<div class="sched-break">\u23F8 ${row.time} \u2014 ${row.label}</div>`;
     }
-    const rowId = "sr_" + idSuffix + "_" + dayTag + "_" + idx;
-    window._scheduleRowData[rowId] = { kategori:row.kategori, type:row.type, acara:row.acara, jantina:row.jantina };
-    return `<div class="sched-row cat-${row.kategori}" style="cursor:pointer;" onclick="toggleScheduleDetail('${rowId}')" title="Klik untuk lihat senarai peserta yang bertanding">
+    return `<div class="sched-row cat-${row.kategori}">
       <div class="sched-time">${row.time}</div>
-      <div style="flex:1;"><div class="sched-acara">${escapeHtml(row.acara)} <span style="font-weight:400;opacity:0.6;">&rarr;</span></div><div class="sched-kat">${escapeHtml(row.katLabel)}</div>
+      <div style="flex:1;"><div class="sched-acara">${escapeHtml(row.acara)}</div><div class="sched-kat">${escapeHtml(row.katLabel)}</div>
       </div>
     </div>`;
   }).join("");
@@ -5000,7 +5094,8 @@ function filterRosterByEvent(roster, kategori, type, acara, jantina){
       list.forEach(evFull=>{
         if(evFull.indexOf(acara) === 0){
           const key = r.sekolah + "|" + evFull;
-          if(!seen[key]){ seen[key] = true; out.push({ label:evFull, sekolah:r.sekolah }); }
+          if(!seen[key]){ seen[key] = { label:evFull, sekolah:r.sekolah, athletes:[] }; out.push(seen[key]); }
+          seen[key].athletes.push(r.nama);
         }
       });
     });
