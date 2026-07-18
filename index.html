@@ -2112,7 +2112,7 @@ function formatLockoutRemaining(ms){
    2. Extensions > Apps Script > tampal kandungan fail Code.gs yang disertakan.
    3. Deploy > New deployment > Web app > Execute as: Me > Who has access: Anyone.
    4. Salin URL Web App yang dijana, gantikan nilai di bawah. */
-const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxTwGITKojedJuYMJfgMYFHw9MMwbnSRToaroFQpod46lbtgDYwAA3CzXFIGf2_RN4HgQ/exec";
+const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwYNcS9eW-XHspfLw7qrSum_xCDiLOmV1Efl1CbCZxkpHSmPgL27HiuEWujP8hp-XS80Q/exec";
 
 /* Kunci rahsia API — MESTI SAMA PERSIS dengan API_SECRET dalam Code.gs.
    Ini disertakan pada setiap permintaan simpan/padam/reset supaya
@@ -2383,90 +2383,6 @@ function formatDateTime(iso){
    ========================================================= */
 const HARI_MS = ["Ahad","Isnin","Selasa","Rabu","Khamis","Jumaat","Sabtu"];
 const BULAN_MS = ["Januari","Februari","Mac","April","Mei","Jun","Julai","Ogos","September","Oktober","November","Disember"];
-
-/* =========================================================
-   MUZIK SEMANGAT — melodi fanfare ringkas dijana terus guna
-   Web Audio API (nada disintesis, BUKAN rakaman lagu sedia ada,
-   jadi tiada isu hak cipta). Lalai OFF; pengguna kena klik
-   sendiri untuk main (patuh dasar auto-play pelayar).
-   ========================================================= */
-let bgMusicCtx = null;
-let bgMusicPlaying = false;
-let bgMusicTimer = null;
-
-const FANFARE_NOTES = [
-  // Melodi pembukaan "Eine kleine Nachtmusik" (Serenade No. 13, K. 525)
-  // karya W. A. Mozart (1756-1791) — domain awam, dijana semula sebagai
-  // nada ringkas (BUKAN rakaman sedia ada, tiada isu hak cipta).
-  [196.00,0.16],[293.66,0.16],[392.00,0.32],
-  [0,0.10],
-  [587.33,0.42],
-  [523.25,0.16],[493.88,0.16],[440.00,0.16],[392.00,0.5],
-  [0,0.3],
-  [196.00,0.16],[293.66,0.16],[392.00,0.32],
-  [0,0.10],
-  [587.33,0.2],[698.46,0.2],[783.99,0.42],
-  [698.46,0.16],[659.25,0.16],[587.33,0.16],[523.25,0.55],
-  [0,0.45]
-];
-
-function playFanfareTone(freq, dur, startTime){
-  if(freq === 0) return;
-  const osc = bgMusicCtx.createOscillator();
-  const gain = bgMusicCtx.createGain();
-  osc.type = "sine";
-  osc.frequency.value = freq;
-  gain.gain.setValueAtTime(0, startTime);
-  gain.gain.linearRampToValueAtTime(0.14, startTime + 0.02);
-  gain.gain.exponentialRampToValueAtTime(0.001, startTime + dur);
-  osc.connect(gain);
-  gain.connect(bgMusicCtx.destination);
-  osc.start(startTime);
-  osc.stop(startTime + dur + 0.05);
-}
-
-function scheduleFanfareLoop(){
-  if(!bgMusicPlaying) return;
-  let t = bgMusicCtx.currentTime + 0.1;
-  let totalDur = 0;
-  FANFARE_NOTES.forEach(([freq,dur])=>{
-    playFanfareTone(freq, dur, t);
-    t += dur;
-    totalDur += dur;
-  });
-  bgMusicTimer = setTimeout(scheduleFanfareLoop, totalDur * 1000);
-}
-
-function startBgMusicAuto(){
-  if(bgMusicPlaying) return;
-  if(!bgMusicCtx){
-    bgMusicCtx = new (window.AudioContext || window.webkitAudioContext)();
-  }
-  if(bgMusicCtx.state === "suspended"){
-    bgMusicCtx.resume().then(()=>{
-      if(!bgMusicPlaying){
-        bgMusicPlaying = true;
-        scheduleFanfareLoop();
-      }
-    }).catch(()=>{ /* akan cuba lagi bila pengguna berinteraksi */ });
-  } else {
-    bgMusicPlaying = true;
-    scheduleFanfareLoop();
-  }
-}
-
-// Cuba main automatik sebaik halaman dimuatkan. Kebanyakan pelayar sekat
-// auto-play audio sehingga pengguna berinteraksi dengan halaman — jadi kita
-// cuba terus, DAN pasang pendengar sekali-sahaja pada interaksi pertama
-// (klik/sentuh/kekunci) sebagai sandaran supaya muzik tetap bermain seawal
-// yang dibenarkan pelayar, tanpa perlu sebarang butang.
-document.addEventListener("DOMContentLoaded", startBgMusicAuto);
-startBgMusicAuto();
-["click","touchstart","keydown"].forEach(evt=>{
-  document.addEventListener(evt, function bgMusicKickstart(){
-    startBgMusicAuto();
-  }, { once:true, passive:true });
-});
 
 function updateCountdown(){
   const el = document.getElementById("countdownBadge");
@@ -4431,7 +4347,7 @@ function assignScheduleTimes(items, startMinutes, endMinutes){
 
 let eventRosterReturnPage = null;
 
-function toggleScheduleDetail(rowId){
+async function toggleScheduleDetail(rowId){
   const data = window._scheduleRowData[rowId];
   if(!data) return;
 
@@ -4445,8 +4361,22 @@ function toggleScheduleDetail(rowId){
   const jantinaLabel = data.jantina === "L" ? "Lelaki" : data.jantina === "P" ? "Perempuan" : "Berpasukan";
   document.getElementById("eventRosterTitle").textContent = data.acara + " \u2014 " + kategoriLabel + " (" + jantinaLabel + ")";
 
-  const entries = getResultEntries(data.kategori, data.type, data.acara, data.jantina);
   const body = document.getElementById("eventRosterBody");
+  body.innerHTML = `<div class="field-note">Memuatkan senarai...</div>`;
+
+  document.querySelectorAll("#loginScreen, #schedulePage, #standingsPage, #statsPage, #app, #adminApp, #statistikApp").forEach(el=>{
+    if(el.id !== "eventRosterPage") el.style.display = "none";
+  });
+  document.getElementById("eventRosterPage").style.display = "block";
+  window.scrollTo({top:0, behavior:"instant"});
+
+  // Admin/Statistik sudah ada capaian data penuh terus (pantas, tepat).
+  // Halaman awam (log masuk/jadual/statistik) guna roster selamat (mode=roster).
+  const isPrivilegedContext = (eventRosterReturnPage === "adminApp" || eventRosterReturnPage === "statistikApp");
+  const entries = isPrivilegedContext
+    ? getResultEntries(data.kategori, data.type, data.acara, data.jantina)
+    : filterRosterByEvent(await ensurePublicRoster(), data.kategori, data.type, data.acara, data.jantina);
+
   if(entries.length === 0){
     body.innerHTML = `<div class="field-note">Belum ada peserta/pasukan didaftarkan untuk acara ini.</div>`;
   } else {
@@ -4454,12 +4384,6 @@ function toggleScheduleDetail(rowId){
       entries.map((en,i)=>`<div class="results-entry-row" style="cursor:default;"><div class="re-label" style="flex:1;">${i+1}. <b>${escapeHtml(en.label)}</b><span class="re-school">${escapeHtml(en.sekolah)}</span></div></div>`).join("") +
       `</div>`;
   }
-
-  document.querySelectorAll("#loginScreen, #schedulePage, #standingsPage, #statsPage, #app, #adminApp, #statistikApp").forEach(el=>{
-    if(el.id !== "eventRosterPage") el.style.display = "none";
-  });
-  document.getElementById("eventRosterPage").style.display = "block";
-  window.scrollTo({top:0, behavior:"instant"});
 }
 
 function closeEventRosterPage(){
@@ -5005,7 +4929,7 @@ async function loadPublicStats(){
         if(!summaryByGender[p.kategori]) summaryByGender[p.kategori] = { L:0, P:0 };
         if(p.jantina === "L"){ summaryByGender[p.kategori].L++; totalL++; }
         else if(p.jantina === "P"){ summaryByGender[p.kategori].P++; totalP++; }
-        roster.push({ nama:p.nama, sekolah:s.name, kategori:p.kategori, jantina:p.jantina });
+        roster.push({ nama:p.nama, sekolah:s.name, kategori:p.kategori, jantina:p.jantina, individu:(p.individu||[]).join(" | "), kumpulan:(p.kumpulan||[]).join(" | ") });
       });
     });
     totalSchools = schoolsWithData.size;
@@ -5054,6 +4978,34 @@ async function ensurePublicRoster(){
   }
   publicRosterCache = publicRosterCache || [];
   return publicRosterCache;
+}
+
+/* Cari peserta/pasukan bagi SATU acara spesifik (kategori+jantina+acara)
+   dari roster awam yang selamat (mode=roster) — dipakai oleh papan jadual
+   awam supaya klik terus tunjuk senarai sebenar, tanpa perlu kebenaran
+   Admin/kunci rahsia untuk tarik data. */
+function filterRosterByEvent(roster, kategori, type, acara, jantina){
+  const out = [];
+  if(type === "IND"){
+    roster.forEach(r=>{
+      if(r.kategori !== kategori || r.jantina !== jantina) return;
+      const list = (r.individu || "").split(" | ").map(s=>s.trim()).filter(Boolean);
+      if(list.includes(acara)) out.push({ label:r.nama, sekolah:r.sekolah });
+    });
+  } else {
+    const seen = {};
+    roster.forEach(r=>{
+      if(r.kategori !== kategori) return;
+      const list = (r.kumpulan || "").split(" | ").map(s=>s.trim()).filter(Boolean);
+      list.forEach(evFull=>{
+        if(evFull.indexOf(acara) === 0){
+          const key = r.sekolah + "|" + evFull;
+          if(!seen[key]){ seen[key] = true; out.push({ label:evFull, sekolah:r.sekolah }); }
+        }
+      });
+    });
+  }
+  return out;
 }
 
 async function toggleStatChip(el, kategori, jantina){
