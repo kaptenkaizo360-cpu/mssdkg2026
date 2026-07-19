@@ -2284,7 +2284,7 @@ function formatLockoutRemaining(ms){
    2. Extensions > Apps Script > tampal kandungan fail Code.gs yang disertakan.
    3. Deploy > New deployment > Web app > Execute as: Me > Who has access: Anyone.
    4. Salin URL Web App yang dijana, gantikan nilai di bawah. */
-const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxwzLfghmHjTBFmMNaky-QOjA4XsupcUUmBXdGSwatX56pnMnztu7LUK5InYHvY3qjD6A/exec";
+const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwYSHWgNnHpOyksrJkaE9pgF4knRu5W55N-aa3EMZvll4GrqJoih9eWxU13zkLlPioX_A/exec";
 
 /* Kunci rahsia API — MESTI SAMA PERSIS dengan API_SECRET dalam Code.gs.
    Ini disertakan pada setiap permintaan simpan/padam/reset supaya
@@ -3945,7 +3945,7 @@ function distributeEntriesToHeats(entries, numHeats){
         targetHeat = heats.length - 1;
       }
       const en = queue.shift();
-      heats[targetHeat].push({ entryKey:en.entryKey, label:en.label, sekolah:en.sekolah, nilai:null, rank:null, advancing:false });
+      heats[targetHeat].push({ entryKey:en.entryKey, label:en.label, sekolah:en.sekolah, noPeserta:en.noPeserta, nilai:null, rank:null, advancing:false });
       remaining--;
     }
   }
@@ -4125,7 +4125,7 @@ function toggleFormsDetail(idx){
   const it = window._allFormsListItems[idx];
   const entries = getResultEntries(it.kategori, it.type, it.acara, it.jantina);
   body.innerHTML = `<div style="padding:10px 4px;font-size:12.5px;">` + entries.map((en,i)=>
-    `<div style="padding:4px 0;border-bottom:1px solid #E5E7EB;">${i+1}. <b>${escapeHtml(en.label)}</b> &mdash; <span style="color:var(--johor-blue);cursor:pointer;text-decoration:underline;" onclick="jumpAdminTableToSchool('${escapeHtml(en.sekolah).replace(/'/g,"\\'")}')" title="Klik untuk lihat semua penyertaan sekolah ini">${escapeHtml(en.sekolah)}</span></div>`
+    `<div style="padding:4px 0;border-bottom:1px solid #E5E7EB;">${i+1}. ${en.noPeserta ? '<span class="mono" style="opacity:0.7;">(No. '+escapeHtml(en.noPeserta)+')</span> ' : ''}<b>${escapeHtml(en.label)}</b> &mdash; <span style="color:var(--johor-blue);cursor:pointer;text-decoration:underline;" onclick="jumpAdminTableToSchool('${escapeHtml(en.sekolah).replace(/'/g,"\\'")}')" title="Klik untuk lihat semua penyertaan sekolah ini">${escapeHtml(en.sekolah)}</span></div>`
   ).join("") + `</div>`;
   row.style.display = "table-row";
 }
@@ -4273,7 +4273,7 @@ const PRINT_FORM_META = {
   lembing: { title:"BORANG LONTAR LEMBING", cols:["Nama","Sekolah","Percubaan 1","Percubaan 2","Percubaan 3","Jarak Terbaik (m)"] },
   jauh:    { title:"BORANG LOMPAT JAUH", cols:["Nama","Sekolah","Percubaan 1","Percubaan 2","Percubaan 3","Jarak Terbaik (m)"] },
   cakera:  { title:"BORANG LONTAR CAKERA", cols:["Nama","Sekolah","Percubaan 1","Percubaan 2","Percubaan 3","Jarak Terbaik (m)"] },
-  nama:    { title:"SENARAI NAMA PESERTA", cols:["No.","Nama","Sekolah"] }
+  nama:    { title:"SENARAI NAMA PESERTA", cols:["No. Peserta","Nama","Sekolah"] }
 };
 
 /* Bagi acara yang melebihi 8 peserta (perlu Acara Akhir/saringan), borang cetak
@@ -4283,10 +4283,10 @@ const PRINT_FORM_META = {
 function getHeatGroupsForPrint(ctx){
   if(ctx.entries.length <= HEAT_SIZE) return null;
   if(heatState && currentResultsContext === ctx){
-    return heatState.heats.filter(h=>h.length).map(h=>h.map(en=>({label:en.label, sekolah:en.sekolah})));
+    return heatState.heats.filter(h=>h.length).map(h=>h.map(en=>({label:en.label, sekolah:en.sekolah, noPeserta:en.noPeserta})));
   }
   const numHeats = Math.ceil(ctx.entries.length / HEAT_SIZE);
-  return distributeEntriesToHeats(ctx.entries, numHeats).map(h=>h.map(en=>({label:en.label, sekolah:en.sekolah})));
+  return distributeEntriesToHeats(ctx.entries, numHeats).map(h=>h.map(en=>({label:en.label, sekolah:en.sekolah, noPeserta:en.noPeserta})));
 }
 
 function generatePrintForm(type){
@@ -4304,7 +4304,7 @@ function generatePrintForm(type){
       const cells = meta.cols.map(col=>{
         if(col === "Nama") return escapeHtml(en.label);
         if(col === "Sekolah") return escapeHtml(en.sekolah);
-        if(col === "No. Lorong/Bib" || col === "No. Lorong" || col === "No.") return String(idx+1);
+        if(col === "No. Lorong/Bib" || col === "No. Lorong" || col === "No." || col === "No. Peserta") return escapeHtml(en.noPeserta || String(idx+1));
         return "";
       });
       return `<tr>${cells.map(c=>`<td>${c}</td>`).join("")}</tr>`;
@@ -4703,6 +4703,8 @@ function buildEventScheduleItems(){
      padang) atas permintaan, walaupun ia acara balapan/individu. */
   const FORCE_DAY1 = [
     { kategori:"B19", jantina:"P", acara:"100M" },
+    { kategori:"B12", jantina:"L", acara:"200M" },
+    { kategori:"B12", jantina:"P", acara:"200M" },
     { kategori:"B19", jantina:"P", acara:"200M" },
     { kategori:"B19", jantina:"L", acara:"200M" },
     { kategori:"B15", jantina:"P", acara:"200M" },
