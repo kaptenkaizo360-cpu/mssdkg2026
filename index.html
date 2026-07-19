@@ -405,6 +405,7 @@ h1,h2,h3,h4{font-family:'Oswald',sans-serif;text-transform:uppercase;letter-spac
 }
 .medal-table th.mt-num{text-align:center;}
 .medal-table td{padding:6px 4px;border-bottom:1px solid var(--line);}
+.medal-table td.mt-rank{font-family:'Oswald',sans-serif;font-weight:700;color:var(--muted);text-align:center;width:26px;}
 .medal-table td.mt-school{font-weight:700;color:var(--ink);}
 .medal-table td.mt-num{text-align:center;}
 .medal-count-btn{
@@ -2274,7 +2275,7 @@ function formatLockoutRemaining(ms){
    2. Extensions > Apps Script > tampal kandungan fail Code.gs yang disertakan.
    3. Deploy > New deployment > Web app > Execute as: Me > Who has access: Anyone.
    4. Salin URL Web App yang dijana, gantikan nilai di bawah. */
-const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbx03p_0Omoc8OZSxWsDWKALOGcYsyFF6o4CNfowucbGcqmtPdB6wqpXj_YUohzNDhCLZQ/exec";
+const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwytXS6kkxzwDAqDAPkmmE4wU0q2EbaeEZFNZXa-FNEaMoYZjoE-CNKdA_U7u-pnlrLgA/exec";
 
 /* Kunci rahsia API — MESTI SAMA PERSIS dengan API_SECRET dalam Code.gs.
    Ini disertakan pada setiap permintaan simpan/padam/reset supaya
@@ -2792,8 +2793,8 @@ function moveResultsModuleTo(slotId){
 async function loadStatistikData(){
   populateResultsKategoriSelect();
   if(isGasConfigured()) await fetchResultsFromSheet();
-  renderMedalTable("medalTableSKStatistik", buildMedalTally("SK"));
-  renderMedalTable("medalTableSMStatistik", buildMedalTally("SM"));
+  renderMedalTable("medalTableSKStatistik", buildMedalTally("SK"), "SK");
+  renderMedalTable("medalTableSMStatistik", buildMedalTally("SM"), "SM");
   renderOlahragawanPanel();
   renderAllFormsList();
   renderAdminAcaraByKategori();
@@ -4481,10 +4482,10 @@ async function calculateAndSaveResults(){
     }
   }
 
-  if(document.getElementById("medalTableSK")) renderMedalTable("medalTableSK", buildMedalTally("SK"));
-  if(document.getElementById("medalTableSM")) renderMedalTable("medalTableSM", buildMedalTally("SM"));
-  if(document.getElementById("medalTableSKStatistik")) renderMedalTable("medalTableSKStatistik", buildMedalTally("SK"));
-  if(document.getElementById("medalTableSMStatistik")) renderMedalTable("medalTableSMStatistik", buildMedalTally("SM"));
+  if(document.getElementById("medalTableSK")) renderMedalTable("medalTableSK", buildMedalTally("SK"), "SK");
+  if(document.getElementById("medalTableSM")) renderMedalTable("medalTableSM", buildMedalTally("SM"), "SM");
+  if(document.getElementById("medalTableSKStatistik")) renderMedalTable("medalTableSKStatistik", buildMedalTally("SK"), "SK");
+  if(document.getElementById("medalTableSMStatistik")) renderMedalTable("medalTableSMStatistik", buildMedalTally("SM"), "SM");
 }
 
 function renderResultsOutput(sortedEntries, isPadang, baseName, kategori, jantinaGroup){
@@ -4739,8 +4740,8 @@ function openStandingsPage(){
   document.getElementById("loginScreen").style.display = "none";
   document.getElementById("standingsPage").style.display = "block";
   window.scrollTo({top:0, behavior:"instant"});
-  renderMedalTable("medalTableSK", buildMedalTally("SK"));
-  renderMedalTable("medalTableSM", buildMedalTally("SM"));
+  renderMedalTable("medalTableSK", buildMedalTally("SK"), "SK");
+  renderMedalTable("medalTableSM", buildMedalTally("SM"), "SM");
   renderOlahragawanPanel("_Public");
 }
 
@@ -5412,8 +5413,8 @@ async function loadPublicResults(){
   } else if(Object.keys(resultsDataCache).length === 0){
     loadResultsCacheFromLocal();
   }
-  renderMedalTable("medalTableSK", buildMedalTally("SK"));
-  renderMedalTable("medalTableSM", buildMedalTally("SM"));
+  renderMedalTable("medalTableSK", buildMedalTally("SK"), "SK");
+  renderMedalTable("medalTableSM", buildMedalTally("SM"), "SM");
 }
 
 function buildMedalTally(peringkat){
@@ -5431,25 +5432,41 @@ function buildMedalTally(peringkat){
   return tally;
 }
 
-function renderMedalTable(elementId, tally){
+function renderMedalTable(elementId, tally, peringkat){
   const el = document.getElementById(elementId);
   if(!el) return;
-  const schools = Object.keys(tally);
+
+  // Sertakan SEMUA sekolah bagi peringkat ini (bukan hanya yang dah menang
+  // pingat) supaya jadual kedudukan terus dipaparkan dari awal, walaupun
+  // bilangan pingat semua sekolah masih kosong (0). SJKT Jalan Stesen Paloh
+  // dikecualikan atas permintaan.
+  const EXCLUDED_SCHOOLS = ["SJKT Jalan Stesen Paloh"];
+  const schoolsForPeringkat = peringkat
+    ? SCHOOLS.filter(s=>TYPE_PERINGKAT[s.type] === peringkat && !EXCLUDED_SCHOOLS.includes(s.name)).map(s=>s.name)
+    : Object.keys(tally).filter(s=>!EXCLUDED_SCHOOLS.includes(s));
+  schoolsForPeringkat.forEach(s=>{
+    if(!tally[s]) tally[s] = { Emas:[], Perak:[], Gangsa:[] };
+  });
+  EXCLUDED_SCHOOLS.forEach(s=>{ delete tally[s]; });
+  let schools = Object.keys(tally);
+
+  schools.sort((a,b)=>{
+    const ta = tally[a], tb = tally[b];
+    return (tb.Emas.length - ta.Emas.length) || (tb.Perak.length - ta.Perak.length) || (tb.Gangsa.length - ta.Gangsa.length) || a.localeCompare(b);
+  });
+
   if(schools.length === 0){
     el.innerHTML = '<div class="medal-empty">Belum ada keputusan direkodkan.</div>';
     return;
   }
-  schools.sort((a,b)=>{
-    const ta = tally[a], tb = tally[b];
-    return (tb.Emas.length - ta.Emas.length) || (tb.Perak.length - ta.Perak.length) || (tb.Gangsa.length - ta.Gangsa.length);
-  });
 
-  const rows = schools.map(school=>{
+  const rows = schools.map((school,idx)=>{
     const t = tally[school];
     const mkBtn = (type, cls) => t[type].length
       ? `<button class="medal-count-btn ${cls}" onclick='showMedalDetail(${JSON.stringify(school)}, ${JSON.stringify(type)}, ${JSON.stringify(t[type])})'>${t[type].length}</button>`
       : `<button class="medal-count-btn ${cls}" disabled>0</button>`;
     return `<tr>
+      <td class="mt-rank">${idx+1}</td>
       <td class="mt-school">${escapeHtml(school)}</td>
       <td class="mt-num">${mkBtn("Emas","emas")}</td>
       <td class="mt-num">${mkBtn("Perak","perak")}</td>
@@ -5459,7 +5476,7 @@ function renderMedalTable(elementId, tally){
 
   el.innerHTML = `
     <table class="medal-table">
-      <thead><tr><th>Sekolah</th><th class="mt-num">Emas</th><th class="mt-num">Perak</th><th class="mt-num">Gangsa</th></tr></thead>
+      <thead><tr><th>#</th><th>Sekolah</th><th class="mt-num">Emas</th><th class="mt-num">Perak</th><th class="mt-num">Gangsa</th></tr></thead>
       <tbody>${rows}</tbody>
     </table>`;
 }
