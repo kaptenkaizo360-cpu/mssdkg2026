@@ -1657,6 +1657,10 @@ body.printing-form #printFormArea{display:block !important;padding:24px;}
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
         Muat Semula
       </button>
+      <button class="btn btn-ghost btn-sm" style="color:#fff;border-color:rgba(255,255,255,0.4);" onclick="printFullStartList()" title="Cetak Senarai Penuh Start List — Semua Acara">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/></svg>
+        Cetak Semua Start List
+      </button>
       <button class="btn btn-ghost btn-sm" style="color:#fff;border-color:rgba(255,255,255,0.4);" onclick="resetAllData()" title="Zon Bahaya — Reset Semua Data">
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
       </button>
@@ -1861,6 +1865,7 @@ body.printing-form #printFormArea{display:block !important;padding:24px;}
               <th>Acara Individu</th>
               <th>Acara Kumpulan</th>
               <th>Kemaskini</th>
+              <th class="no-print">Aksi</th>
             </tr>
           </thead>
           <tbody id="adminTblBody"></tbody>
@@ -1908,6 +1913,10 @@ body.printing-form #printFormArea{display:block !important;padding:24px;}
       <button class="btn btn-ghost btn-sm" style="color:#fff;border-color:rgba(255,255,255,0.4);" onclick="loadStatistikData()" title="Muat semula data">
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
         Muat Semula
+      </button>
+      <button class="btn btn-ghost btn-sm" style="color:#fff;border-color:rgba(255,255,255,0.4);" onclick="printFullStartList()" title="Cetak Senarai Penuh Start List — Semua Acara">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/></svg>
+        Cetak Semua Start List
       </button>
       <button class="btn btn-outline-red btn-sm" style="background:#fff;" onclick="doStatistikLogout()" title="Log keluar">
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
@@ -2275,7 +2284,7 @@ function formatLockoutRemaining(ms){
    2. Extensions > Apps Script > tampal kandungan fail Code.gs yang disertakan.
    3. Deploy > New deployment > Web app > Execute as: Me > Who has access: Anyone.
    4. Salin URL Web App yang dijana, gantikan nilai di bawah. */
-const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwytXS6kkxzwDAqDAPkmmE4wU0q2EbaeEZFNZXa-FNEaMoYZjoE-CNKdA_U7u-pnlrLgA/exec";
+const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxwzLfghmHjTBFmMNaky-QOjA4XsupcUUmBXdGSwatX56pnMnztu7LUK5InYHvY3qjD6A/exec";
 
 /* Kunci rahsia API — MESTI SAMA PERSIS dengan API_SECRET dalam Code.gs.
    Ini disertakan pada setiap permintaan simpan/padam/reset supaya
@@ -2417,11 +2426,16 @@ async function fetchAllFromSheet(timeoutMs){
     const bySchool = {};
     data.rows.forEach(row=>{
       const school = row.Sekolah;
-      if(!bySchool[school]) bySchool[school] = { pengurus:{nama:row.PengurusNama, tel:row.PengurusTel}, peserta:[] };
+      if(!bySchool[school]) bySchool[school] = { pengurus:{nama:row.PengurusNama, tel:row.PengurusTel}, peserta:[], _rowCounter:0 };
       // Baris placeholder (pengurus sahaja, tiada peserta) — tidak dimasukkan sebagai peserta.
       if(!row.Nama && !row.NoPeserta) return;
+      // Guna pembilang baris (bukan semata-mata NoPeserta) supaya ID SENTIASA
+      // unik walaupun ada baris kongsi No. Peserta yang sama (data lapuk/pertindihan
+      // dalam Sheet) — ini elak amaran "ID berlanggar" berulang setiap kali data
+      // dimuat semula daripada Sheet.
+      bySchool[school]._rowCounter++;
       bySchool[school].peserta.push({
-        id: "sheet_"+school+"_"+row.NoPeserta,
+        id: "sheet_"+school+"_"+row.NoPeserta+"_"+bySchool[school]._rowCounter,
         nama: row.Nama,
         noOku: row.NoOKU,
         umur: row.Umur,
@@ -2432,6 +2446,7 @@ async function fetchAllFromSheet(timeoutMs){
         kumpulan: row.AcaraKumpulan ? String(row.AcaraKumpulan).split(" | ").filter(Boolean) : []
       });
     });
+    Object.values(bySchool).forEach(s=>{ delete s._rowCounter; });
     return bySchool;
   }catch(err){
     clearTimeout(timer);
@@ -2457,10 +2472,12 @@ async function fetchSchoolFromSheet(schoolName, timeoutMs){
     if(data.rows.length === 0) return null;
 
     const result = { pengurus:{nama:data.rows[0].PengurusNama||"", tel:data.rows[0].PengurusTel||""}, peserta:[] };
+    let rowCounter = 0;
     data.rows.forEach(row=>{
       if(!row.Nama && !row.NoPeserta) return;
+      rowCounter++;
       result.peserta.push({
-        id: "sheet_"+schoolName+"_"+row.NoPeserta,
+        id: "sheet_"+schoolName+"_"+row.NoPeserta+"_"+rowCounter,
         nama: row.Nama,
         noOku: row.NoOKU,
         umur: row.Umur,
@@ -3158,6 +3175,38 @@ function openAddModal(){
   document.getElementById("pesertaModal").classList.add("show");
 }
 
+/* =========================================================
+   MOD SUNTING ADMIN — admin berkuasa penuh sunting/padam mana-mana
+   peserta dari mana-mana sekolah (No. Peserta, acara, kategori, dsb).
+   Bertukar konteks schoolData/currentSchool sementara kepada sekolah
+   sasaran, guna semula modal & logik simpan/padam sedia ada, kemudian
+   kembalikan paparan Admin selepas selesai.
+   ========================================================= */
+let adminEditMode = false;
+let adminEditReturnSchoolIdx = null;
+
+function openAdminEditModal(schoolIdx){
+  const all = getAllSchoolsData();
+  const x = all[schoolIdx];
+  if(!x) return;
+  adminEditMode = true;
+  adminEditReturnSchoolIdx = schoolIdx;
+  schoolData = x.data;
+  currentSchool = normaliseSchool(x.school.name);
+  currentSchoolLabel = x.school.name;
+  return x;
+}
+
+function adminEditPeserta(schoolIdx, pesertaId){
+  openAdminEditModal(schoolIdx);
+  openEditModal(pesertaId);
+}
+
+function adminDeletePeserta(schoolIdx, pesertaId){
+  openAdminEditModal(schoolIdx);
+  deletePeserta(pesertaId);
+}
+
 function openEditModal(id){
   const p = schoolData.peserta.find(x=>x.id===id);
   if(!p) return;
@@ -3178,6 +3227,7 @@ function openEditModal(id){
 
 function closePesertaModal(){
   document.getElementById("pesertaModal").classList.remove("show");
+  adminEditMode = false;
 }
 
 /* =========================================================
@@ -3308,7 +3358,15 @@ async function savePeserta(){
   persistSchoolData();
   populateFilterKategoriOptions();
   renderAll();
+  const wasAdminEdit = adminEditMode;
   closePesertaModal();
+
+  if(wasAdminEdit){
+    renderAdminTable();
+    renderAdminStats();
+    renderAdminKategoriBreakdown();
+    renderAdminAcaraBreakdown();
+  }
 
   let syncOk = false;
   let syncMessage = "";
@@ -3376,6 +3434,14 @@ async function confirmDeletePeserta(){
   logAction("padam", p.nama, "Peserta dipadam pada " + formatDateTime(new Date().toISOString()));
   populateFilterKategoriOptions();
   renderAll();
+
+  if(adminEditMode){
+    adminEditMode = false;
+    renderAdminTable();
+    renderAdminStats();
+    renderAdminKategoriBreakdown();
+    renderAdminAcaraBreakdown();
+  }
 
   if(isGasConfigured() && schoolData.pengurus.nama && schoolData.pengurus.tel){
     const success = await saveToSheet(true);
@@ -4119,6 +4185,55 @@ function updatePrintButtonsVisibility(){
    sesuai untuk hakim penamat/penjaga masa tulis tangan terus di padang.
    Format ikut templat rasmi yang dimuat naik pengguna, tajuk sekolah/kejohanan
    digantikan dengan "KOPKKG2026". */
+/* Cetak SATU dokumen lengkap merangkumi SEMUA acara (individu & berkumpulan),
+   disusun ikut Atur Cara Kejohanan (Hari 1 padang, Hari 2 trek), setiap acara
+   diikuti senarai peserta/pasukan sebenar (no. peserta, nama, sekolah). */
+function printFullStartList(){
+  const { padangItems, trekItems } = buildEventScheduleItems();
+  const DAY_START = 8*60, DAY_END = 12*60;
+  const day1 = assignScheduleTimes(padangItems, DAY_START, DAY_END);
+  const day2 = assignScheduleTimes(trekItems, DAY_START, DAY_END);
+
+  function buildDaySection(dayLabel, items){
+    let html = `<h2 style="font-family:'Oswald',sans-serif;text-transform:uppercase;border-bottom:2px solid #000;padding-bottom:6px;margin-top:26px;">${dayLabel}</h2>`;
+    items.forEach(row=>{
+      if(row.isBreak) return;
+      const entries = getResultEntries(row.kategori, row.type, row.acara, row.jantina);
+      if(entries.length === 0) return;
+      html += `<div style="margin-top:14px;page-break-inside:avoid;">
+        <div style="font-family:'Oswald',sans-serif;font-weight:700;font-size:13px;text-transform:uppercase;">${row.time} &mdash; ${escapeHtml(row.acara)} &mdash; ${escapeHtml(row.katLabel)}</div>`;
+      if(row.type === "IND"){
+        html += `<table class="print-form-table"><thead><tr><th>No.</th><th>No. Peserta</th><th>Nama</th><th>Sekolah</th></tr></thead><tbody>` +
+          entries.map((en,i)=>`<tr><td>${i+1}</td><td>${escapeHtml(en.noPeserta||"-")}</td><td>${escapeHtml(en.label)}</td><td>${escapeHtml(en.sekolah)}</td></tr>`).join("") +
+          `</tbody></table>`;
+      } else {
+        html += `<table class="print-form-table"><thead><tr><th>No.</th><th>Pasukan</th><th>Sekolah</th><th>Ahli Pasukan</th></tr></thead><tbody>` +
+          entries.map((en,i)=>{
+            const athletes = (en.athletes||[]).map((a,ai)=>`${ai+1}. ${escapeHtml(a.nama)}${a.noPeserta?" (No. "+escapeHtml(a.noPeserta)+")":""}`).join("<br>");
+            return `<tr><td>${i+1}</td><td>${escapeHtml(en.label)}</td><td>${escapeHtml(en.sekolah)}</td><td>${athletes}</td></tr>`;
+          }).join("") +
+          `</tbody></table>`;
+      }
+      html += `</div>`;
+    });
+    return html;
+  }
+
+  const fullHtml = `
+    <div class="print-form-header">
+      <h2>SENARAI PENUH START LIST &mdash; SEMUA ACARA</h2>
+      <div class="print-form-meta"><div>Kejohanan Olahraga Pendidikan Khas MSSD Kluang 2026</div></div>
+    </div>
+    ${buildDaySection("Hari 1 \u2014 Rabu, 22 Julai 2026 (Acara Padang)", day1)}
+    ${buildDaySection("Hari 2 \u2014 Khamis, 23 Julai 2026 (Acara Balapan &amp; Berpasukan)", day2)}
+  `;
+
+  document.getElementById("printFormArea").innerHTML = fullHtml;
+  document.body.classList.add("printing-form");
+  window.print();
+  setTimeout(()=>{ document.body.classList.remove("printing-form"); }, 500);
+}
+
 function generateCardForm(type){
   const ctx = currentResultsContext;
   if(!ctx || !ctx.entries.length){
@@ -5164,14 +5279,14 @@ function renderAdminTable(){
     if(filterSchoolIdx !== "" && String(idx) !== filterSchoolIdx) return;
     x.data.peserta.forEach(p=>{
       if(filterKategori && p.kategori !== filterKategori) return;
-      rows.push({ schoolName:x.school.name, ...p });
+      rows.push({ schoolName:x.school.name, schoolIdx:idx, ...p });
     });
   });
   rows.sort((a,b)=> a.schoolName.localeCompare(b.schoolName) || String(a.noPeserta).localeCompare(String(b.noPeserta)));
 
   const tbody = document.getElementById("adminTblBody");
   if(rows.length === 0){
-    tbody.innerHTML = '<tr class="empty-row"><td colspan="10">Tiada peserta untuk paparan ini.</td></tr>';
+    tbody.innerHTML = '<tr class="empty-row"><td colspan="11">Tiada peserta untuk paparan ini.</td></tr>';
     return;
   }
   let html = "";
@@ -5180,7 +5295,7 @@ function renderAdminTable(){
   rows.forEach(p=>{
     if(p.schoolName !== lastSchool){
       schoolCount = rows.filter(r=>r.schoolName === p.schoolName).length;
-      html += `<tr class="admin-school-group-row"><td colspan="10">${escapeHtml(p.schoolName)} <span class="event-quota-tag">${schoolCount} peserta</span></td></tr>`;
+      html += `<tr class="admin-school-group-row"><td colspan="11">${escapeHtml(p.schoolName)} <span class="event-quota-tag">${schoolCount} peserta</span></td></tr>`;
       lastSchool = p.schoolName;
     }
     const meta = CATEGORY_META[p.kategori];
@@ -5195,6 +5310,10 @@ function renderAdminTable(){
       <td>${eventChips(p.individu)}</td>
       <td>${eventChips(p.kumpulan,'kumpulan')}</td>
       <td class="mono" style="font-size:11px;color:var(--muted);white-space:nowrap;">${formatDateTime(p.updatedAt)}</td>
+      <td class="no-print" style="white-space:nowrap;">
+        <button class="btn btn-ghost btn-sm" style="padding:4px 8px;" onclick="adminEditPeserta(${p.schoolIdx}, '${p.id}')" title="Sunting peserta ini">Sunting</button>
+        <button class="btn btn-outline-red btn-sm" style="padding:4px 8px;" onclick="adminDeletePeserta(${p.schoolIdx}, '${p.id}')" title="Padam peserta ini">Padam</button>
+      </td>
     </tr>`;
   });
   tbody.innerHTML = html;
@@ -5215,9 +5334,14 @@ function renderAdminSchoolStatus(){
 
 function exportAdminCSV(){
   const all = getAllSchoolsData();
+  const filterSchoolIdx = document.getElementById("adminFilterSekolah").value;
+  const filterKategori = document.getElementById("adminFilterKategori").value;
+
   let rows = [];
-  all.forEach(x=>{
+  all.forEach((x, idx)=>{
+    if(filterSchoolIdx !== "" && String(idx) !== filterSchoolIdx) return;
     x.data.peserta.forEach(p=>{
+      if(filterKategori && p.kategori !== filterKategori) return;
       rows.push([
         x.school.name, p.noPeserta, p.nama, p.noOku, p.umur,
         CATEGORY_META[p.kategori].label,
@@ -5238,7 +5362,8 @@ function exportAdminCSV(){
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = "Pendaftaran_KESELURUHAN_KOPK2026.csv";
+  const schoolLabel = filterSchoolIdx !== "" ? normaliseSchool(SCHOOLS[parseInt(filterSchoolIdx,10)].name).replace(/[^A-Z0-9]+/g,"_") : "KESELURUHAN";
+  a.download = "Pendaftaran_" + schoolLabel + "_KOPK2026.csv";
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
