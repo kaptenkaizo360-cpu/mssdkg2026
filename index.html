@@ -707,6 +707,17 @@ thead th{
 tbody td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top;}
 tbody tr:hover{background:rgba(11,31,92,0.03);}
 .empty-row td{text-align:center;color:var(--muted);padding:30px;font-style:italic;}
+.admin-school-group-row td{
+  background:linear-gradient(135deg, var(--johor-blue), var(--johor-blue-deep));
+  color:#fff;
+  font-family:'Oswald',sans-serif;
+  font-weight:700;
+  font-size:13px;
+  text-transform:uppercase;
+  letter-spacing:0.02em;
+  padding:8px 12px;
+}
+.admin-school-group-row .event-quota-tag{background:rgba(255,255,255,0.25);color:#fff;}
 
 /* Race bib badge - signature element */
 .bib{
@@ -1065,6 +1076,29 @@ body.printing-form #printFormArea{display:block !important;padding:24px;}
 .print-form-table th{background:#eee;}
 .print-form-footer{display:flex;justify-content:space-between;margin-top:30px;font-size:13px;}
 
+.kopk-cards-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:0;
+}
+.kopk-card{
+  border:1.5px solid #000;
+  padding:14px 12px;
+  text-align:center;
+  min-height:220px;
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+  page-break-inside:avoid;
+}
+.kopk-card-title{font-family:'Oswald',sans-serif;font-weight:700;font-size:14px;text-transform:uppercase;}
+.kopk-card-sub{font-weight:700;font-size:13px;margin-top:2px;}
+.kopk-card-acara{margin-top:10px;font-size:12px;border-bottom:1px solid #000;padding-bottom:6px;}
+.kopk-card-tempat{margin-top:6px;font-size:11px;text-transform:uppercase;}
+.kopk-card-num{font-family:'Oswald',sans-serif;font-size:36px;font-weight:700;margin:10px 0;}
+.kopk-card-sign{font-size:12px;margin-top:10px;}
+.kopk-card-role{font-size:11px;font-style:italic;margin-top:2px;}
+
 .startlist-block{margin-bottom:22px;}
 .startlist-head{
   font-family:'Oswald',sans-serif;
@@ -1361,6 +1395,12 @@ body.printing-form #printFormArea{display:block !important;padding:24px;}
         <div class="field-note no-print" style="margin-bottom:12px;">
           Senarai penuh semua acara individu yang ada peserta berdaftar, Bawah 8 Tahun sehingga Pra PPKI Terbuka. Jadual automatik ikut Acara Akhir (saringan) jika acara berkenaan sudah melebihi 8 peserta.
         </div>
+        <div class="no-print" style="margin-bottom:14px;">
+          <label for="individuDashboardSchoolFilter">Tapis ikut Sekolah (untuk cetak satu sekolah sahaja)</label>
+          <select id="individuDashboardSchoolFilter" onchange="renderIndividuDashboard()">
+            <option value="">-- Semua Sekolah --</option>
+          </select>
+        </div>
         <div id="individuDashboardWrap"></div>
       </div>
     </div>
@@ -1399,6 +1439,12 @@ body.printing-form #printFormArea{display:block !important;padding:24px;}
       <div class="panel-body">
         <div class="field-note no-print" style="margin-bottom:12px;">
           Senarai penuh semua acara berpasukan/relay merentas semua kategori, beserta nama setiap atlet dalam pasukan. Jadual automatik ikut Acara Akhir (saringan) jika acara berkenaan sudah melebihi 8 pasukan.
+        </div>
+        <div class="no-print" style="margin-bottom:14px;">
+          <label for="kumpulanDashboardSchoolFilter">Tapis ikut Sekolah (untuk cetak satu sekolah sahaja)</label>
+          <select id="kumpulanDashboardSchoolFilter" onchange="renderKumpulanDashboard()">
+            <option value="">-- Semua Sekolah --</option>
+          </select>
         </div>
         <div id="kumpulanDashboardWrap"></div>
       </div>
@@ -1602,14 +1648,6 @@ body.printing-form #printFormArea{display:block !important;padding:24px;}
     </div>
     <div class="header-clock no-print" id="headerClockAdmin">--:--:--</div>
     <div class="header-actions">
-      <button class="btn btn-ghost btn-sm" style="color:#fff;border-color:rgba(255,255,255,0.4);" onclick="openIndividuDashboardPage()" title="Dashboard Start List Acara Individu">
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a8 8 0 0 1 16 0v1"/></svg>
-        Start List Individu
-      </button>
-      <button class="btn btn-ghost btn-sm" style="color:#fff;border-color:rgba(255,255,255,0.4);" onclick="openKumpulanDashboardPage()" title="Dashboard Start List Acara Berkumpulan">
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="7" r="3"/><circle cx="17" cy="7" r="3"/><path d="M2 21v-1a6 6 0 0 1 11-3.5"/><path d="M13 16.5A6 6 0 0 1 22 20v1"/></svg>
-        Start List Berkumpulan
-      </button>
       <button class="btn btn-ghost btn-sm" style="color:#fff;border-color:rgba(255,255,255,0.4);" onclick="goHome()" title="Kembali ke atas">
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>
         Home
@@ -1617,6 +1655,9 @@ body.printing-form #printFormArea{display:block !important;padding:24px;}
       <button class="btn btn-ghost btn-sm" style="color:#fff;border-color:rgba(255,255,255,0.4);" onclick="loadAdminData()" title="Muat semula data">
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
         Muat Semula
+      </button>
+      <button class="btn btn-ghost btn-sm" style="color:#fff;border-color:rgba(255,255,255,0.4);" onclick="resetAllData()" title="Zon Bahaya — Reset Semua Data">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
       </button>
       <button class="btn btn-outline-red btn-sm" style="background:#fff;" onclick="doAdminLogout()" title="Log keluar">
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
@@ -1683,20 +1724,6 @@ body.printing-form #printFormArea{display:block !important;padding:24px;}
         </button>
 
         <div id="resultsOutputWrap" style="margin-top:18px;"></div>
-      </div>
-    </div>
-
-    <div class="panel" style="border-color:var(--johor-blue);">
-      <div class="panel-head">
-        <h2 style="color:var(--johor-blue);">Semua Borang Hakim &amp; Senarai Nama</h2>
-        <button class="btn btn-ghost btn-sm no-print" onclick="renderAllFormsList()">Muat Semula</button>
-      </div>
-      <div class="panel-body">
-        <div class="field-note" style="margin-bottom:12px;">
-          Senarai SEMUA acara yang ada peserta/pasukan berdaftar merentas semua kategori. Klik "Cetak" untuk terus cetak borang paling sesuai bagi acara tersebut
-          (borang hakim penamat untuk trek/berpasukan, borang khas untuk padang). Untuk pilih jenis borang lain (cth. Penjaga Masa/Hakim Lorong), guna pemilih Kategori/Jantina/Acara di atas.
-        </div>
-        <div style="overflow-x:auto;" id="allFormsListWrap"></div>
       </div>
     </div>
 
@@ -1767,21 +1794,6 @@ body.printing-form #printFormArea{display:block !important;padding:24px;}
       </div>
     </div>
 
-    <div class="panel no-print" style="border-color:var(--danger);">
-      <div class="panel-head"><h2 style="color:var(--danger);">Zon Bahaya — Reset Semua Data</h2></div>
-      <div class="panel-body">
-        <div class="field-note" style="margin-bottom:12px;">
-          Tindakan ini akan memadam SEMUA data pendaftaran bagi SEMUA 40 sekolah (pengurus + peserta) —
-          termasuk data pada pelayar/peranti ini dan pada Google Sheet pusat (jika dikonfigurasi).
-          Tindakan ini <b>tidak boleh dibatalkan</b>. Gunakan hanya selepas kejohanan tamat atau untuk mula sesi pendaftaran baharu.
-        </div>
-        <button class="btn btn-outline-red btn-sm" onclick="resetAllData()">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
-          Reset Semua Data
-        </button>
-      </div>
-    </div>
-
     <div class="panel no-print">
       <div class="panel-head">
         <h2>Kata Laluan Sekolah (Nombor Telefon Pengurus)</h2>
@@ -1815,14 +1827,6 @@ body.printing-form #printFormArea{display:block !important;padding:24px;}
     <div class="panel">
       <div class="panel-head"><h2>Pecahan Mengikut Acara</h2></div>
       <div class="panel-body" id="adminAcaraBreakdown" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;"></div>
-    </div>
-
-    <div class="panel">
-      <div class="panel-head">
-        <h2>Senarai Acara Mengikut Kategori</h2>
-        <button class="btn btn-ghost btn-sm no-print" onclick="window.print()">Cetak</button>
-      </div>
-      <div class="panel-body" id="adminAcaraByKategori" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;"></div>
     </div>
 
     <div class="panel">
@@ -1919,6 +1923,28 @@ body.printing-form #printFormArea{display:block !important;padding:24px;}
 
   <div class="container">
     <div id="statistikResultsSlot"></div>
+
+    <div class="panel no-print" style="border-color:var(--johor-blue);">
+      <div class="panel-head">
+        <h2 style="color:var(--johor-blue);">Semua Borang Hakim &amp; Senarai Nama</h2>
+        <button class="btn btn-ghost btn-sm no-print" onclick="renderAllFormsList()">Muat Semula</button>
+      </div>
+      <div class="panel-body">
+        <div class="field-note" style="margin-bottom:12px;">
+          Senarai SEMUA acara yang ada peserta/pasukan berdaftar merentas semua kategori. Klik "Cetak" untuk terus cetak borang paling sesuai bagi acara tersebut
+          (borang hakim penamat untuk trek/berpasukan, borang khas untuk padang). Untuk pilih jenis borang lain (cth. Penjaga Masa/Hakim Lorong), guna pemilih Kategori/Jantina/Acara di atas.
+        </div>
+        <div style="overflow-x:auto;" id="allFormsListWrap"></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <h2>Senarai Acara Mengikut Kategori</h2>
+        <button class="btn btn-ghost btn-sm no-print" onclick="window.print()">Cetak</button>
+      </div>
+      <div class="panel-body" id="adminAcaraByKategori" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;"></div>
+    </div>
 
     <div class="public-stats-card" id="statistikMedalCard" style="margin-top:0;">
       <div class="public-stats-head">Kedudukan Keseluruhan Kejohanan</div>
@@ -2248,7 +2274,7 @@ function formatLockoutRemaining(ms){
    2. Extensions > Apps Script > tampal kandungan fail Code.gs yang disertakan.
    3. Deploy > New deployment > Web app > Execute as: Me > Who has access: Anyone.
    4. Salin URL Web App yang dijana, gantikan nilai di bawah. */
-const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxfprtBgwP9C69JuJzGcRrVN_CLHp2bS_lefDAAtu6bdwwG-9AJtvg8yijwtrrN-OUFIA/exec";
+const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbx03p_0Omoc8OZSxWsDWKALOGcYsyFF6o4CNfowucbGcqmtPdB6wqpXj_YUohzNDhCLZQ/exec";
 
 /* Kunci rahsia API — MESTI SAMA PERSIS dengan API_SECRET dalam Code.gs.
    Ini disertakan pada setiap permintaan simpan/padam/reset supaya
@@ -2770,6 +2796,7 @@ async function loadStatistikData(){
   renderMedalTable("medalTableSMStatistik", buildMedalTally("SM"));
   renderOlahragawanPanel();
   renderAllFormsList();
+  renderAdminAcaraByKategori();
   renderEventSchedule();
 }
 
@@ -3642,7 +3669,6 @@ async function loadAdminData(){
   renderAdminStats();
   renderAdminKategoriBreakdown();
   renderAdminAcaraBreakdown();
-  renderAdminAcaraByKategori();
   renderAdminTable();
   renderAdminSchoolStatus();
   renderAdminPasswordTable();
@@ -3652,7 +3678,6 @@ async function loadAdminData(){
   populateResultsKategoriSelect();
   if(isGasConfigured()) await fetchResultsFromSheet();
   renderOlahragawanPanel();
-  renderAllFormsList();
   renderEventSchedule();
 }
 
@@ -3782,7 +3807,7 @@ function getResultEntries(kategori, type, baseName, jantina){
     all.forEach(x=>{
       x.data.peserta.forEach(p=>{
         if(p.kategori === kategori && p.individu.includes(baseName) && p.jantina === jantina){
-          entries.push({ entryKey: p.id, label: p.nama, sekolah: x.school.name });
+          entries.push({ entryKey: p.id, label: p.nama, sekolah: x.school.name, noPeserta: p.noPeserta });
         }
       });
     });
@@ -3800,7 +3825,7 @@ function getResultEntries(kategori, type, baseName, jantina){
               seen[key] = { entryKey: key, label: evFull, sekolah: x.school.name, athletes: [] };
               entries.push(seen[key]);
             }
-            seen[key].athletes.push(p.nama);
+            seen[key].athletes.push({ nama: p.nama, noPeserta: p.noPeserta });
           }
         });
       });
@@ -3878,9 +3903,25 @@ function shouldUseHeats(entries, type, baseName){
    ========================================================= */
 /* Dashboard penuh — semua acara INDIVIDU (Bawah 8 hingga Pra PPKI), ikut
    kategori + jantina, terus papar nama peserta & sekolah (tiada perlu klik). */
+function populateDashboardSchoolFilter(selectId){
+  const sel = document.getElementById(selectId);
+  if(!sel) return;
+  const currentVal = sel.value;
+  sel.innerHTML = '<option value="">-- Semua Sekolah --</option>';
+  SCHOOLS.forEach(s=>{
+    const opt = document.createElement("option");
+    opt.value = s.name;
+    opt.textContent = s.name;
+    sel.appendChild(opt);
+  });
+  sel.value = currentVal;
+}
+
 function renderIndividuDashboard(){
   const wrap = document.getElementById("individuDashboardWrap");
   if(!wrap) return;
+  populateDashboardSchoolFilter("individuDashboardSchoolFilter");
+  const schoolFilter = document.getElementById("individuDashboardSchoolFilter").value;
   let html = "";
   let anyFound = false;
   Object.keys(CATEGORY_META).forEach(kat=>{
@@ -3889,7 +3930,8 @@ function renderIndividuDashboard(){
     const meta = CATEGORY_META[kat];
     conf.individu.forEach(ev=>{
       ["L","P"].forEach(jantina=>{
-        const entries = getResultEntries(kat, "IND", ev, jantina);
+        let entries = getResultEntries(kat, "IND", ev, jantina);
+        if(schoolFilter) entries = entries.filter(en=>en.sekolah === schoolFilter);
         if(entries.length === 0) return;
         anyFound = true;
         const janLabel = jantina === "L" ? "Lelaki" : "Perempuan";
@@ -3908,8 +3950,8 @@ function renderIndividuDashboard(){
           if(colliding.length){
             html += `<div class="error-text show" style="margin:4px 0;">\u26A0\uFE0F Sekolah tak dapat diagihkan sepenuhnya (terlalu sedikit sekolah/saringan): ${colliding.map(s=>escapeHtml(s)+" ("+schoolCounts[s]+")").join(", ")}. Guna modul Keputusan &amp; "Pindah ke" untuk susun manual jika perlu.</div>`;
           }
-          html += `<table class="startlist-table"><thead><tr><th style="width:50px;">No.</th><th>Nama</th><th>Sekolah</th></tr></thead><tbody>` +
-            group.map((en,i)=>`<tr><td>${i+1}</td><td><b>${escapeHtml(en.label)}</b></td><td>${escapeHtml(en.sekolah)}</td></tr>`).join("") +
+          html += `<table class="startlist-table"><thead><tr><th style="width:50px;">No.</th><th style="width:90px;">No. Peserta</th><th>Nama</th><th>Sekolah</th><th style="width:110px;">Masa/Keputusan</th></tr></thead><tbody>` +
+            group.map((en,i)=>`<tr><td>${i+1}</td><td class="mono">${escapeHtml(en.noPeserta || "-")}</td><td><b>${escapeHtml(en.label)}</b></td><td>${escapeHtml(en.sekolah)}</td><td></td></tr>`).join("") +
             `</tbody></table>`;
         });
         html += `</div>`;
@@ -3924,6 +3966,8 @@ function renderIndividuDashboard(){
 function renderKumpulanDashboard(){
   const wrap = document.getElementById("kumpulanDashboardWrap");
   if(!wrap) return;
+  populateDashboardSchoolFilter("kumpulanDashboardSchoolFilter");
+  const schoolFilter = document.getElementById("kumpulanDashboardSchoolFilter").value;
   let html = "";
   let anyFound = false;
   Object.keys(CATEGORY_META).forEach(kat=>{
@@ -3934,7 +3978,8 @@ function renderKumpulanDashboard(){
     if(SHARED_4X50_CATEGORIES.includes(kat) && !kumList.includes(SHARED_4X50_EVENT)) kumList.unshift(SHARED_4X50_EVENT);
     if(OPEN_KUMPULAN_CATEGORIES.includes(kat)) kumList.push(OPEN_KUMPULAN_EVENT);
     kumList.forEach(ev=>{
-      const entries = getResultEntries(kat, "KUM", ev, "");
+      let entries = getResultEntries(kat, "KUM", ev, "");
+      if(schoolFilter) entries = entries.filter(en=>en.sekolah === schoolFilter);
       if(entries.length === 0) return;
       anyFound = true;
       const groups = (entries.length > HEAT_SIZE)
@@ -3949,7 +3994,7 @@ function renderKumpulanDashboard(){
         html += `<table class="startlist-table"><thead><tr><th style="width:50px;">No.</th><th>Pasukan</th><th>Sekolah</th><th>Ahli Pasukan</th></tr></thead><tbody>` +
           group.map((en,i)=>{
             const original = entries.find(e=>e.entryKey === en.entryKey) || en;
-            const athletes = (original.athletes||[]).map((a,ai)=>`${ai+1}. ${escapeHtml(a)}`).join("<br>");
+            const athletes = (original.athletes||[]).map((a,ai)=>`${ai+1}. ${escapeHtml(a.nama)}${a.noPeserta ? ' <span class="mono" style="opacity:0.65;">(No. '+escapeHtml(a.noPeserta)+')</span>' : ''}`).join("<br>");
             return `<tr><td>${i+1}</td><td><b>${escapeHtml(en.label)}</b></td><td>${escapeHtml(en.sekolah)}</td><td>${athletes}</td></tr>`;
           }).join("") +
           `</tbody></table>`;
@@ -4049,6 +4094,7 @@ function updatePrintButtonsVisibility(){
   if(!currentResultsContext){ wrap.innerHTML = ""; return; }
   const ctx = currentResultsContext;
   const btn = (type,label)=>`<button class="btn btn-ghost btn-sm" onclick="generatePrintForm('${type}')">\u{1F5A8}\uFE0F ${label}</button>`;
+  const cardBtn = (type,label)=>`<button class="btn btn-ghost btn-sm" style="border-color:var(--gold);color:#8a6d00;" onclick="generateCardForm('${type}')">\u{1F5A8}\uFE0F ${label} (KOPKKG2026)</button>`;
 
   if(ctx.type === "IND" && ctx.isPadang){
     const fieldFormMap = {
@@ -4060,10 +4106,47 @@ function updatePrintButtonsVisibility(){
     const f = fieldFormMap[ctx.baseName];
     wrap.innerHTML = (f ? btn(f.type, f.label) : "") + btn("nama", "Cetak Senarai Nama Sahaja");
   } else if(ctx.type === "IND"){
-    wrap.innerHTML = btn("penamat","Borang Hakim Penamat") + btn("masa","Borang Penjaga Masa") + btn("lorong","Borang Hakim Lorong") + btn("nama","Cetak Senarai Nama Sahaja");
+    wrap.innerHTML = btn("penamat","Borang Hakim Penamat (Jadual)") + btn("masa","Borang Penjaga Masa (Jadual)") + btn("lorong","Borang Hakim Lorong") + btn("nama","Cetak Senarai Nama Sahaja")
+      + cardBtn("penamat","Borang Hakim Penamat") + cardBtn("masa","Borang Penjaga Masa");
   } else {
-    wrap.innerHTML = btn("penamat","Borang Hakim Penamat") + btn("masa","Borang Penjaga Masa") + btn("nama","Cetak Senarai Nama Sahaja");
+    wrap.innerHTML = btn("penamat","Borang Hakim Penamat (Jadual)") + btn("masa","Borang Penjaga Masa (Jadual)") + btn("nama","Cetak Senarai Nama Sahaja")
+      + cardBtn("penamat","Borang Hakim Penamat") + cardBtn("masa","Borang Penjaga Masa");
   }
+}
+
+/* Borang gaya "slip kad" — satu kad kecil setiap kedudukan (1,2,3...),
+   sesuai untuk hakim penamat/penjaga masa tulis tangan terus di padang.
+   Format ikut templat rasmi yang dimuat naik pengguna, tajuk sekolah/kejohanan
+   digantikan dengan "KOPKKG2026". */
+function generateCardForm(type){
+  const ctx = currentResultsContext;
+  if(!ctx || !ctx.entries.length){
+    showToast("Sila pilih acara dan pastikan ada peserta/pasukan berdaftar.", "warn");
+    return;
+  }
+  const title = type === "penamat" ? "BORANG HAKIM PENAMAT" : "BORANG PENJAGA MASA";
+  const roleLabel = type === "penamat" ? "(Hakim Penamat)" : "(Penjaga Masa)";
+  const jantinaCode = ctx.jantinaGroup === "L" ? "L" : ctx.jantinaGroup === "P" ? "P" : "L/P";
+  const numCards = Math.max(ctx.entries.length, 6);
+
+  let cardsHtml = "";
+  for(let i=1;i<=numCards;i++){
+    cardsHtml += `
+      <div class="kopk-card">
+        <div class="kopk-card-title">${title}</div>
+        <div class="kopk-card-sub">KOPKKG2026</div>
+        <div class="kopk-card-acara">ACARA : ${escapeHtml(ctx.baseName)} T1/2/3 (${jantinaCode})</div>
+        <div class="kopk-card-tempat">TEMPAT</div>
+        <div class="kopk-card-num">${i}</div>
+        <div class="kopk-card-sign">T/Tangan : ____________________</div>
+        <div class="kopk-card-role">${roleLabel}</div>
+      </div>`;
+  }
+
+  document.getElementById("printFormArea").innerHTML = `<div class="kopk-cards-grid">${cardsHtml}</div>`;
+  document.body.classList.add("printing-form");
+  window.print();
+  setTimeout(()=>{ document.body.classList.remove("printing-form"); }, 500);
 }
 
 const PRINT_FORM_META = {
@@ -4607,7 +4690,7 @@ async function toggleScheduleDetail(rowId){
     body.innerHTML = `<div style="font-size:13.5px;">` +
       entries.map((en,i)=>{
         const athleteList = (en.athletes && en.athletes.length)
-          ? `<div style="margin:6px 0 4px 20px;font-size:12px;">` + en.athletes.map((a,ai)=>`<div style="padding:1px 0;">${ai+1}. ${escapeHtml(a)}</div>`).join("") + `</div>`
+          ? `<div style="margin:6px 0 4px 20px;font-size:12px;">` + en.athletes.map((a,ai)=>`<div style="padding:1px 0;">${ai+1}. ${escapeHtml(a.nama)}${a.noPeserta ? ' (No. '+escapeHtml(a.noPeserta)+')' : ''}</div>`).join("") + `</div>`
           : "";
         return `<div class="results-entry-row" style="cursor:default;flex-direction:column;align-items:stretch;">
           <div class="re-label" style="flex:1;">${i+1}. <b>${escapeHtml(en.label)}</b><span class="re-school">${escapeHtml(en.sekolah)}</span></div>
@@ -5090,9 +5173,17 @@ function renderAdminTable(){
     tbody.innerHTML = '<tr class="empty-row"><td colspan="10">Tiada peserta untuk paparan ini.</td></tr>';
     return;
   }
-  tbody.innerHTML = rows.map(p=>{
+  let html = "";
+  let lastSchool = null;
+  let schoolCount = 0;
+  rows.forEach(p=>{
+    if(p.schoolName !== lastSchool){
+      schoolCount = rows.filter(r=>r.schoolName === p.schoolName).length;
+      html += `<tr class="admin-school-group-row"><td colspan="10">${escapeHtml(p.schoolName)} <span class="event-quota-tag">${schoolCount} peserta</span></td></tr>`;
+      lastSchool = p.schoolName;
+    }
     const meta = CATEGORY_META[p.kategori];
-    return `<tr>
+    html += `<tr>
       <td><span class="bib ${meta.peringkat==='SM'?'sm-type':''}">${p.noPeserta}</span></td>
       <td style="cursor:pointer;color:var(--johor-blue);text-decoration:underline;" onclick="jumpAdminTableToSchool('${escapeHtml(p.schoolName).replace(/'/g,"\\'")}')" title="Klik untuk tapis semua penyertaan sekolah ini">${escapeHtml(p.schoolName)}</td>
       <td>${escapeHtml(p.nama)}</td>
@@ -5104,7 +5195,8 @@ function renderAdminTable(){
       <td>${eventChips(p.kumpulan,'kumpulan')}</td>
       <td class="mono" style="font-size:11px;color:var(--muted);white-space:nowrap;">${formatDateTime(p.updatedAt)}</td>
     </tr>`;
-  }).join("");
+  });
+  tbody.innerHTML = html;
 }
 
 function renderAdminSchoolStatus(){
@@ -5270,7 +5362,7 @@ function filterRosterByEvent(roster, kategori, type, acara, jantina){
         if(evFull.indexOf(acara) === 0){
           const key = r.sekolah + "|" + evFull;
           if(!seen[key]){ seen[key] = { label:evFull, sekolah:r.sekolah, athletes:[] }; out.push(seen[key]); }
-          seen[key].athletes.push(r.nama);
+          seen[key].athletes.push({ nama: r.nama, noPeserta: "" });
         }
       });
     });
