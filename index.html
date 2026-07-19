@@ -2197,46 +2197,23 @@ const CATEGORY_META = {
   PRA:  { label:"Pra PPKI Terbuka", sub:"Terbuka", peringkat:"SK", group:"khas" }
 };
 
-const OPEN_KUMPULAN_EVENT = "4 X 100M Mix Terbuka Sekolah Rendah";
-
-/* PENYERASIAN NAMA LAMA: acara berkumpulan pernah ditukar nama (cth. "4X100M
-   (Mix 2L2P)" -> "4 X 100M Mix Bawah 10 Tahun"). Peserta yang telah didaftarkan
-   SEBELUM penukaran ini masih menyimpan nama LAMA dalam rekod mereka. Supaya
-   pendaftaran lama itu tetap dikesan/dipaparkan (bukan hilang terus), kita
-   semak juga senarai nama lama yang sepadan bagi setiap kategori.
-   */
-const LEGACY_KUM_NAMES = {
-  B8:    ["4X50M (Mix 2L2P)"],
-  B10:   ["4X50M (Mix 2L2P)", "4X100M (Mix 2L2P)"],
-  B12:   ["4X100M (Mix 2L2P)"],
-  B15:   ["4X100M (Mix 2L2P)"],
-  B19:   ["4X100M (Mix 2L2P)"],
-  SD_SR: ["2X50M"],
-  SD_SM: ["2X50M"],
-  PRA:   ["2X50M"]
-};
-const LEGACY_OPEN_KUMPULAN_EVENT = "4X100M (Mix Terbuka 2L2P)";
-
-/* Semak jika acara BERKUMPULAN yang tersimpan (evFull, cth. "...— Pasukan A")
-   sepadan dengan acara semasa (baseName) BAGI kategori ini — termasuk nama
-   lama sebelum penukaran, supaya pendaftaran sedia ada tidak "hilang". */
-function kumEventMatches(evFull, baseName, kategori){
-  if(evFull.indexOf(baseName) === 0) return true;
-  if(baseName === OPEN_KUMPULAN_EVENT && evFull.indexOf(LEGACY_OPEN_KUMPULAN_EVENT) === 0) return true;
-  const legacyNames = LEGACY_KUM_NAMES[kategori] || [];
-  return legacyNames.some(legacy => evFull.indexOf(legacy) === 0);
-}
+const OPEN_KUMPULAN_EVENT = "4X100M (Mix Terbuka 2L2P)";
 const OPEN_KUMPULAN_CATEGORIES = ["B8","B10","B12","B15","B19"];
 
+/* Acara 4X50M (Mix 2L2P) dimiliki kategori Bawah 10, tetapi turut terbuka
+   kepada peserta Bawah 8 (satu perlumbaan sama, dua kategori umur boleh masuk). */
+const SHARED_4X50_EVENT = "4X50M (Mix 2L2P)";
+const SHARED_4X50_CATEGORIES = ["B8","B10"];
+
 const EVENTS_BY_CATEGORY = {
-  B8:   { individu:["50M","80M"], kumpulan:["4 X 50M Mix Bawah 8 Tahun"] },
-  B10:  { individu:["100M","L/Jauh"], kumpulan:["4 X 50M Mix Bawah 10 Tahun","4 X 100M Mix Bawah 10 Tahun"] },
-  B12:  { individu:["100M","200M","L/Jauh","L/Peluru"], kumpulan:["4 X 100M Mix Bawah 12 Tahun"] },
-  B15:  { individu:["100M","200M","L/Jauh","R/Lembing","L/Peluru","L/Cakera"], kumpulan:["4 X 100M Mix Bawah 15 Tahun"] },
-  B19:  { individu:["100M","200M","L/Jauh","R/Lembing","L/Peluru","L/Cakera"], kumpulan:["4 X 100M Mix Bawah 19 Tahun"] },
-  SD_SR:{ individu:["50M"], kumpulan:["2 X 50M Sindrom Down Terbuka Rendah"] },
-  SD_SM:{ individu:["80M","L/Peluru"], kumpulan:["2 X 50M Sindrom Down Terbuka Menengah"] },
-  PRA:  { individu:["50M","80M"], kumpulan:["2 X 50M Terbuka Pra PPKI"] }
+  B8:   { individu:["50M","80M"], kumpulan:[] },
+  B10:  { individu:["100M","L/Jauh"], kumpulan:["4X100M (Mix 2L2P)"] },
+  B12:  { individu:["100M","200M","L/Jauh","L/Peluru"], kumpulan:["4X100M (Mix 2L2P)"] },
+  B15:  { individu:["100M","200M","L/Jauh","R/Lembing","L/Peluru","L/Cakera"], kumpulan:["4X100M (Mix 2L2P)"] },
+  B19:  { individu:["100M","200M","L/Jauh","R/Lembing","L/Peluru","L/Cakera"], kumpulan:["4X100M (Mix 2L2P)"] },
+  SD_SR:{ individu:["50M"], kumpulan:["2X50M"] },
+  SD_SM:{ individu:["80M","L/Peluru"], kumpulan:["2X50M"] },
+  PRA:  { individu:["50M","80M"], kumpulan:["2X50M"] }
 };
 
 const PADANG_EVENTS = ["L/Jauh","L/Peluru","L/Cakera","R/Lembing"];
@@ -2357,7 +2334,7 @@ function formatLockoutRemaining(ms){
    2. Extensions > Apps Script > tampal kandungan fail Code.gs yang disertakan.
    3. Deploy > New deployment > Web app > Execute as: Me > Who has access: Anyone.
    4. Salin URL Web App yang dijana, gantikan nilai di bawah. */
-const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycby2XwHCX3_lsy4RsIKTkbggHF_zvI56ojWvjW3n3k70yBTRpz10cw5WwDMEW3XAsOO12g/exec";
+const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyFykHv2haS4zf3kGG2nw87xkfaugK5LYGHUSiK-OmqKRbcX2hJ4tT9yKgNAyxiYQ0s1A/exec";
 
 /* Kunci rahsia API — MESTI SAMA PERSIS dengan API_SECRET dalam Code.gs.
    Ini disertakan pada setiap permintaan simpan/padam/reset supaya
@@ -3258,10 +3235,12 @@ function renderEventCheckboxes(){
   });
 
   const kumpulanList = evConf.kumpulan.slice();
+  if(SHARED_4X50_CATEGORIES.includes(kategori)) kumpulanList.unshift(SHARED_4X50_EVENT);
   if(OPEN_KUMPULAN_CATEGORIES.includes(kategori)) kumpulanList.push(OPEN_KUMPULAN_EVENT);
 
   kumpulanList.forEach(baseName=>{
     const isOpen = baseName === OPEN_KUMPULAN_EVENT;
+    const isShared4x50 = baseName === SHARED_4X50_EVENT;
     ["A","B","C","D"].forEach(team=>{
       const evName = baseName + " — Pasukan " + team;
       const label = document.createElement("label");
@@ -3270,7 +3249,7 @@ function renderEventCheckboxes(){
       if(checked) label.classList.add("checked");
       label.innerHTML = `
         <input type="checkbox" data-type="kumpulan" value="${evName}" ${checked?"checked":""} onchange="onEventCheckChange(this)">
-        <span class="ename">${evName}${(isOpen && team==="A") ? '<span class="ehint">Terbuka — semua kategori umur boleh menyertai</span>' : ""}${team!=="A" ? '<span class="ehint">Guna Pasukan '+team+' jika sekolah menghantar lebih daripada '+(team==="B"?"1":team==="C"?"2":"3")+' pasukan untuk acara ini</span>' : ""}</span>
+        <span class="ename">${evName}${(isOpen && team==="A") ? '<span class="ehint">Terbuka — semua kategori umur boleh menyertai</span>' : ""}${(isShared4x50 && team==="A") ? '<span class="ehint">Dikongsi — kategori Bawah 8 dan Bawah 10 boleh menyertai</span>' : ""}${team!=="A" ? '<span class="ehint">Guna Pasukan '+team+' jika sekolah menghantar lebih daripada '+(team==="B"?"1":team==="C"?"2":"3")+' pasukan untuk acara ini</span>' : ""}</span>
       `;
       kumpulanWrap.appendChild(label);
     });
@@ -4056,6 +4035,7 @@ function onResultsKategoriChange(){
   sel.appendChild(indivGroup);
 
   const kumBaseNames = evConf.kumpulan.slice();
+  if(SHARED_4X50_CATEGORIES.includes(kategori)) kumBaseNames.unshift(SHARED_4X50_EVENT);
   if(OPEN_KUMPULAN_CATEGORIES.includes(kategori)) kumBaseNames.push(OPEN_KUMPULAN_EVENT);
   if(kumBaseNames.length){
     const kumGroup = document.createElement("optgroup");
@@ -4089,7 +4069,7 @@ function getResultEntries(kategori, type, baseName, jantina){
       x.data.peserta.forEach(p=>{
         if(p.kategori !== kategori) return;
         p.kumpulan.forEach(evFull=>{
-          if(kumEventMatches(evFull, baseName, kategori)){
+          if(evFull.indexOf(baseName) === 0){
             const key = x.school.name + "|" + evFull;
             if(!seen[key]){
               seen[key] = { entryKey: key, label: evFull, sekolah: x.school.name, athletes: [] };
@@ -4279,6 +4259,7 @@ function renderKumpulanDashboard(){
     if(!conf) return;
     const meta = CATEGORY_META[kat];
     let kumList = conf.kumpulan.slice();
+    if(SHARED_4X50_CATEGORIES.includes(kat) && !kumList.includes(SHARED_4X50_EVENT)) kumList.unshift(SHARED_4X50_EVENT);
     if(OPEN_KUMPULAN_CATEGORIES.includes(kat)) kumList.push(OPEN_KUMPULAN_EVENT);
     kumList.forEach(ev=>{
       let entries = getResultEntries(kat, "KUM", ev, "");
@@ -4979,6 +4960,7 @@ function buildEventScheduleItems(){
     });
 
     let kumList = conf.kumpulan.slice();
+    if(SHARED_4X50_CATEGORIES.includes(kat) && !kumList.includes(SHARED_4X50_EVENT)) kumList.unshift(SHARED_4X50_EVENT);
     if(OPEN_KUMPULAN_CATEGORIES.includes(kat)) kumList.push(OPEN_KUMPULAN_EVENT);
     kumList.forEach(ev=>{
       trekItems.push({ kategori:kat, katLabel:meta.label + " (Berpasukan)", acara:ev, jantina:"", type:"KUM" });
@@ -5731,7 +5713,7 @@ function filterRosterByEvent(roster, kategori, type, acara, jantina){
       if(r.kategori !== kategori) return;
       const list = (r.kumpulan || "").split(" | ").map(s=>s.trim()).filter(Boolean);
       list.forEach(evFull=>{
-        if(kumEventMatches(evFull, acara, kategori)){
+        if(evFull.indexOf(acara) === 0){
           const key = r.sekolah + "|" + evFull;
           if(!seen[key]){ seen[key] = { label:evFull, sekolah:r.sekolah, athletes:[] }; out.push(seen[key]); }
           seen[key].athletes.push({ nama: r.nama, noPeserta: "" });
