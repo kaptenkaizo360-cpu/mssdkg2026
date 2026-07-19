@@ -541,6 +541,7 @@ input:focus, select:focus{
 .btn-ghost{background:transparent;color:var(--johor-blue);border:1.5px solid var(--line);}
 .btn-ghost:hover{border-color:var(--johor-blue);}
 .btn-outline-red{background:transparent;color:var(--johor-red);border:1.5px solid var(--johor-red);}
+#btnToggleRegLock.reg-locked-active{background:var(--danger);color:#fff;border-color:var(--danger);}
 .btn-outline-red:hover{background:var(--johor-red);color:#fff;}
 .btn-sm{padding:6px 12px;font-size:12px;border-radius:7px;}
 .error-text{
@@ -1133,28 +1134,26 @@ body.printing-form #printFormArea{display:block !important;padding:24px;}
   border-bottom:1px solid var(--line);
 }
 .startlist-table tr:nth-child(even) td{background:rgba(0,0,0,0.015);}
-
-
-/* Pendaftaran sekolah telah ditutup */
-.role-tab.locked-tab{opacity:.72;cursor:not-allowed;position:relative;}
-.role-tab.locked-tab::after{content:"🔒";margin-left:6px;font-size:12px;}
-.registration-lock-card{
-  border:1px solid rgba(196,30,58,.24);background:linear-gradient(135deg,rgba(196,30,58,.08),rgba(11,31,92,.06));
-  border-radius:12px;padding:20px;text-align:center;color:var(--ink);
+.giliran-select{
+  font-family:'Public Sans',sans-serif;
+  font-size:11px;
+  padding:2px 6px;
+  border-radius:6px;
+  border:1px solid var(--johor-blue);
+  color:var(--johor-blue);
+  background:#fff;
+  margin-left:4px;
 }
-.registration-lock-icon{font-size:44px;line-height:1;margin-bottom:10px;}
-.registration-lock-title{font-family:'Oswald',sans-serif;text-transform:uppercase;color:var(--johor-blue);font-size:20px;font-weight:700;}
-.registration-lock-note{font-size:13px;color:var(--muted);margin-top:7px;line-height:1.55;}
-.relay-order-wrap{margin-top:7px;padding-top:7px;border-top:1px dashed rgba(11,31,92,.18);}
-.relay-order-wrap select{width:100%;padding:7px 9px;font-size:12px;background:#fff;}
-.relay-order-wrap .relay-order-label{display:block;font-size:10.5px;font-weight:800;text-transform:uppercase;color:var(--johor-blue);margin-bottom:4px;}
-.relay-athlete-line{display:grid;grid-template-columns:78px 122px minmax(150px,1fr);gap:8px;align-items:center;padding:4px 0;border-bottom:1px dotted rgba(0,0,0,.11);}
-.relay-athlete-line:last-child{border-bottom:0;}
-.relay-position{font-weight:800;color:var(--johor-blue);white-space:nowrap;}
-.relay-bib{font-family:monospace;font-weight:800;white-space:nowrap;}
-.relay-unset{color:var(--warn);font-weight:800;}
-@media(max-width:600px){.relay-athlete-line{grid-template-columns:70px 105px minmax(120px,1fr);font-size:11.5px;gap:5px;}}
-
+.giliran-badge{
+  display:inline-block;
+  font-size:10.5px;
+  font-weight:700;
+  background:var(--johor-blue);
+  color:#fff;
+  padding:2px 8px;
+  border-radius:10px;
+  margin-left:4px;
+}
 </style>
 </head>
 <body>
@@ -1198,18 +1197,22 @@ body.printing-form #printFormArea{display:block !important;padding:24px;}
     <div class="login-sub">Sistem Pendaftaran Peserta</div>
 
     <div class="role-tabs">
-      <div class="role-tab active locked-tab" id="tabGuru" onclick="switchRoleTab('guru')">Pengurus</div>
+      <div class="role-tab active" id="tabGuru" onclick="switchRoleTab('guru')">Pengurus</div>
       <div class="role-tab" id="tabAdmin" onclick="switchRoleTab('admin')">Admin</div>
       <div class="role-tab" id="tabStatistik" onclick="switchRoleTab('statistik')">Statistik</div>
     </div>
 
-    <!-- PENGURUS DIKUNCI -->
+    <!-- GURU LOGIN -->
     <div class="role-panel active" id="panelGuru">
-      <div class="registration-lock-card">
-        <div class="registration-lock-icon">🔒</div>
-        <div class="registration-lock-title">Pendaftaran Pengurus Telah Ditutup</div>
-        <div class="registration-lock-note">Pengurus pasukan tidak lagi boleh log masuk atau mengubah pendaftaran. Semua perubahan peserta, nombor badan, kategori, acara dan susunan pelari kini hanya boleh dilakukan oleh Admin.</div>
-      </div>
+      <label for="inpSekolah">Nama Sekolah</label>
+      <select id="inpSekolah"></select>
+
+      <label for="inpPassword">Nombor Telefon Pengurus Pasukan</label>
+      <input type="text" id="inpPassword" placeholder="cth: 0123456789" inputmode="numeric" required onkeydown="if(event.key==='Enter')doLogin()">
+
+      <div class="error-text" id="loginError">Sila masukkan nombor telefon yang sah.</div>
+
+      <button class="btn btn-primary btn-block" id="btnLogin" onclick="doLogin()">Log Masuk</button>
     </div>
 
     <!-- ADMIN LOGIN -->
@@ -1381,6 +1384,26 @@ body.printing-form #printFormArea{display:block !important;padding:24px;}
   </div>
 
   <footer class="app-footer no-print">Statistik Penyertaan &middot; MSSD Kluang</footer>
+</div>
+
+<!-- ================= MODAL PENDAFTARAN TERKUNCI (Pengurus) ================= -->
+<div class="modal-overlay" id="pengurusLockedModal">
+  <div class="modal-box" style="width:min(420px,94vw);text-align:center;">
+    <div class="modal-body" style="padding-top:8px;">
+      <div style="display:flex;justify-content:center;margin-bottom:14px;">
+        <svg viewBox="0 0 24 24" width="52" height="52" fill="none" stroke="var(--danger)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      </div>
+      <h3 style="margin:0 0 8px;">Pendaftaran Telah Ditutup</h3>
+      <p style="font-size:13.5px;color:var(--muted);margin:0;">
+        Tempoh pendaftaran/kemaskini oleh Pengurus Pasukan telah <b>ditutup</b> oleh pihak penganjur.
+        Sebarang pertukaran maklumat peserta (No. Peserta, acara, dll) kini hanya boleh dibuat oleh Admin.
+        Sila hubungi Urus Setia PPKI Kluang jika ada perubahan mustahak.
+      </p>
+    </div>
+    <div class="modal-foot" style="justify-content:center;">
+      <button class="btn btn-primary" onclick="closePengurusLockedModal()">Faham</button>
+    </div>
+  </div>
 </div>
 
 <!-- ================= HALAMAN START LIST ACARA INDIVIDU ================= -->
@@ -1649,7 +1672,7 @@ body.printing-form #printFormArea{display:block !important;padding:24px;}
 
   </div>
 
-  <footer class="app-footer no-print">Sistem Pendaftaran Dalaman &middot; MSSD Kluang &middot; Data rasmi disimpan dalam Google Sheet pusat. &middot; <span id="visitCounterTeacher"></span></footer>
+  <footer class="app-footer no-print">Sistem Pendaftaran Dalaman &middot; MSSD Kluang &middot; Data disimpan pada peranti/pelayar ini sahaja. &middot; <span id="visitCounterTeacher"></span></footer>
 </div>
 
 <!-- ================= ADMIN DASHBOARD ================= -->
@@ -1679,6 +1702,15 @@ body.printing-form #printFormArea{display:block !important;padding:24px;}
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/></svg>
         Cetak Semua Start List
       </button>
+      <button class="btn btn-ghost btn-sm" id="btnToggleRegLock" style="color:#fff;border-color:rgba(255,255,255,0.4);" onclick="toggleRegistrationLock()" title="Kunci/Buka akses Pengurus Pasukan">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg> Kunci Pendaftaran
+      </button>
+      <button class="btn btn-ghost btn-sm" style="color:#fff;border-color:rgba(255,255,255,0.4);" onclick="openIndividuDashboardPage()" title="Dashboard Start List Acara Individu">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a8 8 0 0 1 16 0v1"/></svg>
+      </button>
+      <button class="btn btn-ghost btn-sm" style="color:#fff;border-color:rgba(255,255,255,0.4);" onclick="openKumpulanDashboardPage()" title="Dashboard Start List Acara Berkumpulan (Susun Giliran Larian)">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="7" r="3"/><circle cx="17" cy="7" r="3"/><path d="M2 21v-1a6 6 0 0 1 11-3.5"/><path d="M13 16.5A6 6 0 0 1 22 20v1"/></svg>
+      </button>
       <button class="btn btn-ghost btn-sm" style="color:#fff;border-color:rgba(255,255,255,0.4);" onclick="resetAllData()" title="Zon Bahaya — Reset Semua Data">
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
       </button>
@@ -1691,7 +1723,7 @@ body.printing-form #printFormArea{display:block !important;padding:24px;}
   <div class="lane-divider no-print"></div>
 
   <div class="pengurus-info no-print">
-    <div id="sheetSyncStatus">Sumber data: Google Sheet pusat</div>
+    <div id="sheetSyncStatus">Sumber data: Pelayar tempatan sahaja</div>
   </div>
 
   <div class="container">
@@ -1706,7 +1738,7 @@ body.printing-form #printFormArea{display:block !important;padding:24px;}
     <div id="adminResultsSlot"><div id="keputusanModulePanel"><div class="panel no-print" style="border-color:var(--gold);">
       <div class="panel-head">
         <h2 style="color:#8a6d00;">Kejohanan — Keputusan &amp; Kedudukan</h2>
-        <span class="event-quota-tag" id="resultsAccessTag">Admin: Kemasukan Keputusan</span>
+        <span class="event-quota-tag">Kemasukan Keputusan</span>
       </div>
       <div class="panel-body">
         <div class="field-note" style="margin-bottom:14px;">
@@ -1820,7 +1852,7 @@ body.printing-form #printFormArea{display:block !important;padding:24px;}
     <div class="panel no-print">
       <div class="panel-head">
         <h2>Kata Laluan Sekolah (Nombor Telefon Pengurus)</h2>
-        <span class="event-quota-tag">🔒</span>
+        <span class="event-quota-tag">Sulit &middot; Admin Sahaja</span>
       </div>
       <div class="panel-body">
         <div class="field-note" style="margin-bottom:10px;">Pilih nama sekolah untuk lihat kata laluannya sahaja — elak papar semua sekolah sekali gus.</div>
@@ -1862,7 +1894,6 @@ body.printing-form #printFormArea{display:block !important;padding:24px;}
           <select id="adminFilterKategori" onchange="renderAdminTable()">
             <option value="">Semua Kategori</option>
           </select>
-          <button class="btn btn-primary btn-sm" onclick="adminAddPeserta()">＋ Tambah Peserta</button>
           <button class="btn btn-ghost btn-sm" onclick="exportAdminCSV()">Muat Turun CSV</button>
           <button class="btn btn-ghost btn-sm" onclick="window.print()" title="Cetak senarai peserta">
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/></svg>
@@ -1899,7 +1930,7 @@ body.printing-form #printFormArea{display:block !important;padding:24px;}
 
   </div>
 
-  <footer class="app-footer no-print">Dashboard Admin &middot; MSSD Kluang &middot; Data rasmi daripada Google Sheet pusat. &middot; <span id="visitCounterAdmin"></span></footer>
+  <footer class="app-footer no-print">Dashboard Admin &middot; MSSD Kluang &middot; Data digabungkan daripada semua sekolah pada peranti/pelayar ini. &middot; <span id="visitCounterAdmin"></span></footer>
 </div>
 
 <!-- ================= STATISTIK DASHBOARD ================= -->
@@ -1912,7 +1943,7 @@ body.printing-form #printFormArea{display:block !important;padding:24px;}
       <img src="data:image/png;base64,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" alt="Johor Leads">
       <div>
         <h1>Kejohanan Olahraga Pendidikan Khas MSSD Kluang 2026</h1>
-        <div class="school-tag">Dashboard Statistik &middot; Paparan Sahaja</div>
+        <div class="school-tag">Dashboard Statistik &middot; Kemasukan Keputusan</div>
       </div>
     </div>
     <div class="header-clock no-print" id="headerClockStatistik">--:--:--</div>
@@ -2078,7 +2109,7 @@ body.printing-form #printFormArea{display:block !important;padding:24px;}
     <div class="modal-body">
       <p style="font-size:13.5px;color:var(--ink);margin:0 0 14px;">
         Tindakan ini akan memadam <b>SEMUA</b> data pendaftaran bagi <b>SEMUA 40 sekolah</b>
-        daripada Google Sheet pusat. Tindakan ini <b>TIDAK BOLEH DIBATALKAN</b>.
+        (pelayar ini<span id="resetModalSheetNote"></span>). Tindakan ini <b>TIDAK BOLEH DIBATALKAN</b>.
       </p>
       <label for="resetConfirmInput">Taip <span class="mono" style="font-weight:700;">RESET</span> untuk sahkan</label>
       <input type="text" id="resetConfirmInput" placeholder="Taip RESET di sini" oninput="onResetConfirmInput()">
@@ -2130,7 +2161,7 @@ body.printing-form #printFormArea{display:block !important;padding:24px;}
       </select>
       <div class="field-note">Peserta hanya boleh bertanding dalam SATU kategori umur. Peserta Bawah 10/Bawah 15 boleh pilih naik ke Bawah 12/Bawah 19 secara sukarela — tetapi sebaik didaftar di kategori atas, mereka HANYA layak kategori atas itu sahaja (tiada turun semula).</div>
 
-      <label for="fNoPeserta">No. Badan / No. Peserta (Bib)</label>
+      <label for="fNoPeserta">No. Peserta (Bib)</label>
       <input type="text" id="fNoPeserta" placeholder="Ikut pilihan anda, cth: 01, SK01, Bib-5, dll">
       <div class="field-note">Tiada format ditetapkan — isi mengikut kesesuaian pengurus pasukan.</div>
       <div class="error-text" id="noPesertaError"></div>
@@ -2166,108 +2197,19 @@ const CATEGORY_META = {
   PRA:  { label:"Pra PPKI Terbuka", sub:"Terbuka", peringkat:"SK", group:"khas" }
 };
 
-const REGISTRATION_LOCKED = true;
-const OPEN_KUMPULAN_EVENT = "4 x 100M Mix Terbuka Sekolah Rendah";
-const OPEN_KUMPULAN_CATEGORIES = ["B8","B10","B12"];
-const OPEN_KUMPULAN_OWNER_CATEGORY = "B12";
-const OPEN_KUMPULAN_SM_EVENT = "4 x 100M Mix Terbuka Sekolah Menengah";
-const OPEN_KUMPULAN_SM_CATEGORIES = ["B15","B19"];
-const OPEN_KUMPULAN_SM_OWNER_CATEGORY = "B19";
-const SHARED_4X50_EVENT = "";
-const SHARED_4X50_CATEGORIES = [];
-
-function getOpenKumpulanConfig(baseName){
-  if(baseName === OPEN_KUMPULAN_EVENT){
-    return {
-      categories: OPEN_KUMPULAN_CATEGORIES,
-      ownerCategory: OPEN_KUMPULAN_OWNER_CATEGORY,
-      label: "Terbuka Sekolah Rendah",
-      hint: "Terbuka untuk Bawah 8, Bawah 10 dan Bawah 12 sekolah rendah"
-    };
-  }
-  if(baseName === OPEN_KUMPULAN_SM_EVENT){
-    return {
-      categories: OPEN_KUMPULAN_SM_CATEGORIES,
-      ownerCategory: OPEN_KUMPULAN_SM_OWNER_CATEGORY,
-      label: "Terbuka Sekolah Menengah",
-      hint: "Terbuka untuk Bawah 15 dan Bawah 19, lelaki dan perempuan"
-    };
-  }
-  return null;
-}
-
-function isOpenKumpulanCategory(baseName, kategori){
-  const conf = getOpenKumpulanConfig(baseName);
-  return !!(conf && conf.categories.includes(kategori));
-}
+const OPEN_KUMPULAN_EVENT = "4 X 100M Mix Terbuka Sekolah Rendah";
+const OPEN_KUMPULAN_CATEGORIES = ["B8","B10","B12","B15","B19"];
 
 const EVENTS_BY_CATEGORY = {
-  B8:   { individu:["50M","80M"], kumpulan:["4 x 50M Mix Bawah 8 Tahun"] },
-  B10:  { individu:["100M","L/Jauh"], kumpulan:["4 x 50M Mix Bawah 10 Tahun","4 x 100M Mix Bawah 10"] },
-  B12:  { individu:["100M","200M","L/Jauh","L/Peluru"], kumpulan:["4 x 100M Mix Bawah 12"] },
-  B15:  { individu:["100M","200M","L/Jauh","R/Lembing","L/Peluru","L/Cakera"], kumpulan:["4 x 100M Mix Bawah 15"] },
-  B19:  { individu:["100M","200M","L/Jauh","R/Lembing","L/Peluru","L/Cakera"], kumpulan:["4 x 100M Mix Bawah 19"] },
-  SD_SR:{ individu:["50M"], kumpulan:["2 x 50M Sindrom Down Terbuka Rendah"] },
-  SD_SM:{ individu:["80M","L/Peluru"], kumpulan:["2 x 50M Sindrom Down Terbuka Menengah"] },
-  PRA:  { individu:["50M","80M"], kumpulan:["2 x 50M Terbuka Pra PPKI"] }
+  B8:   { individu:["50M","80M"], kumpulan:["4 X 50M Mix Bawah 8 Tahun"] },
+  B10:  { individu:["100M","L/Jauh"], kumpulan:["4 X 50M Mix Bawah 10 Tahun","4 X 100M Mix Bawah 10 Tahun"] },
+  B12:  { individu:["100M","200M","L/Jauh","L/Peluru"], kumpulan:["4 X 100M Mix Bawah 12 Tahun"] },
+  B15:  { individu:["100M","200M","L/Jauh","R/Lembing","L/Peluru","L/Cakera"], kumpulan:["4 X 100M Mix Bawah 15 Tahun"] },
+  B19:  { individu:["100M","200M","L/Jauh","R/Lembing","L/Peluru","L/Cakera"], kumpulan:["4 X 100M Mix Bawah 19 Tahun"] },
+  SD_SR:{ individu:["50M"], kumpulan:["2 X 50M Sindrom Down Terbuka Rendah"] },
+  SD_SM:{ individu:["80M","L/Peluru"], kumpulan:["2 X 50M Sindrom Down Terbuka Menengah"] },
+  PRA:  { individu:["50M","80M"], kumpulan:["2 X 50M Terbuka Pra PPKI"] }
 };
-
-function normalizeLegacyGroupEventName(evName, kategori){
-  evName = String(evName || "").trim();
-  if(!evName) return "";
-  let teamSuffix = "";
-  const teamMatch = evName.match(/\s+[—-]\s+Pasukan\s+([A-D])$/i);
-  if(teamMatch){
-    teamSuffix = " — Pasukan " + teamMatch[1].toUpperCase();
-    evName = evName.slice(0, teamMatch.index).trim();
-  }
-  const upper = evName.toUpperCase().replace(/\s+/g," ");
-  let base = evName;
-  if(upper.includes("TERBUKA") && (upper.includes("4X100") || upper.includes("4 X 100"))){
-    if(upper.includes("MENENGAH") || kategori === "B15" || kategori === "B19") base = OPEN_KUMPULAN_SM_EVENT;
-    else base = OPEN_KUMPULAN_EVENT;
-  }
-  else if(upper.includes("4X100") || upper.includes("4 X 100")){
-    const map = {B10:"4 x 100M Mix Bawah 10",B12:"4 x 100M Mix Bawah 12",B15:"4 x 100M Mix Bawah 15",B19:"4 x 100M Mix Bawah 19"};
-    base = map[kategori] || evName;
-  } else if(upper.includes("4X50") || upper.includes("4 X 50")){
-    base = kategori === "B8" ? "4 x 50M Mix Bawah 8 Tahun" : "4 x 50M Mix Bawah 10 Tahun";
-  } else if(upper.includes("2X50") || upper.includes("2 X 50")){
-    if(kategori === "SD_SR") base = "2 x 50M Sindrom Down Terbuka Rendah";
-    else if(kategori === "SD_SM") base = "2 x 50M Sindrom Down Terbuka Menengah";
-    else if(kategori === "PRA") base = "2 x 50M Terbuka Pra PPKI";
-  }
-  return base + teamSuffix;
-}
-
-function normalizeRelayOrderMap(raw, kategori){
-  const src = raw && typeof raw === "object" ? raw : {};
-  const out = {};
-  Object.keys(src).forEach(key=>{
-    const nk = normalizeLegacyGroupEventName(key, kategori);
-    const order = Number(src[key]);
-    if(nk && Number.isInteger(order) && order >= 1 && order <= 4) out[nk] = order;
-  });
-  return out;
-}
-
-function getKumpulanBaseEvents(kategori, forSelection){
-  const conf = EVENTS_BY_CATEGORY[kategori];
-  const list = conf ? conf.kumpulan.slice() : [];
-  [OPEN_KUMPULAN_EVENT, OPEN_KUMPULAN_SM_EVENT].forEach(baseName=>{
-    const openConf = getOpenKumpulanConfig(baseName);
-    const shouldAdd = forSelection
-      ? openConf.categories.includes(kategori)
-      : kategori === openConf.ownerCategory;
-    if(shouldAdd && !list.includes(baseName)) list.push(baseName);
-  });
-  return list;
-}
-
-function getKumpulanDisplayCategoryLabel(kategori, baseName){
-  const openConf = getOpenKumpulanConfig(baseName);
-  return openConf ? openConf.label : CATEGORY_META[kategori].label;
-}
 
 const PADANG_EVENTS = ["L/Jauh","L/Peluru","L/Cakera","R/Lembing"];
 const MAX_INDIVIDU = 2;
@@ -2331,6 +2273,11 @@ function normalizePhone(str){
   return String(str || "").replace(/\D/g, "");
 }
 
+const ADMIN_ID = "admin";
+const ADMIN_PASSWORD = "kopkadmin";
+
+const STATISTIK_ID = "kopk";
+const STATISTIK_PASSWORD = "kopk";
 
 /* =========================================================
    SEKATAN CUBAAN LOG MASUK (throttling)
@@ -2382,67 +2329,15 @@ function formatLockoutRemaining(ms){
    2. Extensions > Apps Script > tampal kandungan fail Code.gs yang disertakan.
    3. Deploy > New deployment > Web app > Execute as: Me > Who has access: Anyone.
    4. Salin URL Web App yang dijana, gantikan nilai di bawah. */
-const EXPECTED_SHEET_ID = "1byzkE99K3q1D1F2-hRTCwFkftqIaD5pXOMMtaMTDkFk";
-const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyTvKqIRKSOHECM_BBxYJ3If4iPFVKkf41ujYyJhblHf-3WHAsAL3vSLx9qVvWtw9DY8Q/exec";
+const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzfLKvgGlm7dxi-b4KhdFd0sHHJCvSM1CUBf0_jkZBHPF9IsP3pTDGJ4rWNmiS800HGxQ/exec";
 
-/* Semua pengesahan peribadi kini dibuat pada Code.gs. Token sesi sementara
-   disimpan untuk tab semasa sahaja dan tidak didedahkan sebagai kata laluan
-   kekal dalam kod HTML. */
-let authToken = "";
-let authRole = "";
+/* Kunci rahsia API — MESTI SAMA PERSIS dengan API_SECRET dalam Code.gs.
+   Ini disertakan pada setiap permintaan simpan/padam/reset supaya
+   pelayan (Google Apps Script) hanya terima data daripada aplikasi ini. */
+const API_SECRET = "YKWuDxShX23JDDc8sZZpAOdkIi3bg1A2";
 
 function isGasConfigured(){
   return GAS_WEB_APP_URL && GAS_WEB_APP_URL.indexOf("PASTE_URL_WEB_APP") === -1;
-}
-
-let databaseBindingVerified = false;
-async function verifyDatabaseBinding(force){
-  if(databaseBindingVerified && !force) return true;
-  if(!isGasConfigured()) throw new Error("URL Google Apps Script belum dikonfigurasi.");
-  const controller = new AbortController();
-  const timer = setTimeout(()=>controller.abort(), 10000);
-  try{
-    const res = await fetch(GAS_WEB_APP_URL + "?mode=health&_t=" + Date.now(), {method:"GET", cache:"no-store", signal:controller.signal});
-    const data = await res.json();
-    if(!data || !data.ok) throw new Error("Pengesahan pangkalan data gagal.");
-    if(String(data.sheetId || "") !== EXPECTED_SHEET_ID){
-      throw new Error("Deployment Apps Script tidak menggunakan Google Sheet yang ditetapkan.");
-    }
-    databaseBindingVerified = true;
-    return true;
-  }catch(err){
-    if(err && err.name === "AbortError") throw new Error("Pengesahan Google Sheet mengambil masa terlalu lama.");
-    throw err;
-  }finally{
-    clearTimeout(timer);
-  }
-}
-
-async function apiPost(action, payload, timeoutMs){
-  if(!isGasConfigured()) throw new Error("URL Google Apps Script belum dikonfigurasi.");
-  await verifyDatabaseBinding();
-  const controller = new AbortController();
-  const timer = setTimeout(()=>controller.abort(), timeoutMs || 12000);
-  try{
-    const res = await fetch(GAS_WEB_APP_URL, {
-      method:"POST",
-      headers:{ "Content-Type":"text/plain;charset=utf-8" },
-      body: JSON.stringify(Object.assign({action:action}, payload || {})),
-      signal: controller.signal,
-      cache:"no-store"
-    });
-    const text = await res.text();
-    let data;
-    try{ data = JSON.parse(text); }
-    catch(e){ throw new Error("Respons pelayan tidak sah. Pastikan deployment Apps Script menggunakan versi terkini."); }
-    if(!data || !data.ok) throw new Error((data && data.error) || "Permintaan gagal.");
-    return data;
-  }catch(err){
-    if(err && err.name === "AbortError") throw new Error("Pelayan mengambil masa terlalu lama. Cuba semula.");
-    throw err;
-  }finally{
-    clearTimeout(timer);
-  }
 }
 
 /* =========================================================
@@ -2455,16 +2350,41 @@ let schoolData = { pengurus:{nama:"", tel:""}, peserta:[] };
 function storageKey(schoolKey){ return "kejohanan2026_v1::" + schoolKey; }
 function normaliseSchool(name){ return name.trim().toUpperCase().replace(/\s+/g," "); }
 
-function emptySchoolData(){
-  return { pengurus:{nama:"", tel:""}, peserta:[] };
+/* Giliran (susunan larian pelari dalam pasukan berkumpulan) disimpan sebagai
+   teks "NamaAcaraPenuh=1|NamaAcaraLain=3" dalam satu sel Sheet — nyahkod
+   semula kepada objek { namaAcaraPenuh: nombor }. */
+function decodeGiliran(raw){
+  const out = {};
+  if(!raw) return out;
+  String(raw).split(" | ").forEach(pair=>{
+    const idx = pair.lastIndexOf("=");
+    if(idx === -1) return;
+    const key = pair.slice(0, idx).trim();
+    const val = parseInt(pair.slice(idx+1).trim(), 10);
+    if(key && !isNaN(val)) out[key] = val;
+  });
+  return out;
 }
+
 function loadSchoolData(schoolKey){
-  // Google Sheet ialah satu-satunya sumber data. Tiada fallback rekod peserta
-  // daripada localStorage supaya cache lama tidak bercampur dengan data rasmi.
-  return emptySchoolData();
+  try{
+    const raw = localStorage.getItem(storageKey(schoolKey));
+    if(!raw) return { pengurus:{nama:"", tel:""}, peserta:[] };
+    const parsed = JSON.parse(raw);
+    if(!parsed.pengurus) parsed.pengurus = {nama:"",tel:""};
+    if(!parsed.peserta) parsed.peserta = [];
+    return parsed;
+  }catch(e){
+    console.error("Ralat memuatkan data:", e);
+    return { pengurus:{nama:"", tel:""}, peserta:[] };
+  }
 }
 function persistSchoolData(){
-  // Perubahan kekal hanya selepas saveSchool berjaya pada Google Sheet.
+  try{
+    localStorage.setItem(storageKey(currentSchool), JSON.stringify(schoolData));
+  }catch(e){
+    showToast("Ralat menyimpan data pada pelayar ini.", "danger");
+  }
 }
 
 /* =========================================================
@@ -2495,41 +2415,43 @@ async function saveToSheet(silent){
     if(!silent) showToast("URL Google Apps Script belum dikonfigurasi. Sila hubungi admin sistem.", "warn");
     return false;
   }
-  if(!authToken){
-    if(!silent) showToast("Sesi telah tamat. Sila log masuk semula.", "danger");
-    return false;
-  }
-  if(authRole !== "admin" && (!schoolData.pengurus.nama || !schoolData.pengurus.tel)){
+  if(!schoolData.pengurus.nama || !schoolData.pengurus.tel){
     if(!silent) showToast("Sila lengkapkan maklumat Pengurus Pasukan dahulu.", "warn");
     return false;
   }
   const btn = document.getElementById("btnSaveSheet");
-  const originalHtml = btn ? btn.innerHTML : "";
-  if(btn){ btn.disabled = true; btn.innerHTML = "Menyimpan..."; }
+  const originalHtml = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = "Menyimpan...";
   let success = false;
   try{
-    const data = await apiPost("saveSchool", {
-      token: authToken,
-      school: currentSchoolLabel,
-      pengurus: schoolData.pengurus,
-      peserta: schoolData.peserta
-    }, 20000);
-    if(data.schoolData){
-      schoolData = data.schoolData;
-      if(sheetDataCache && currentSchoolLabel) sheetDataCache[currentSchoolLabel] = schoolData;
+    const res = await fetch(GAS_WEB_APP_URL, {
+      method:"POST",
+      headers:{ "Content-Type":"text/plain;charset=utf-8" },
+      body: JSON.stringify({
+        action:"saveSchool",
+        secret: API_SECRET,
+        school: currentSchoolLabel,
+        pengurus: schoolData.pengurus,
+        peserta: schoolData.peserta
+      })
+    });
+    const data = await res.json();
+    if(data && data.ok){
+      markSaved();
+      logAction("simpan", currentSchoolLabel, "Data disimpan ke pangkalan data pusat pada " + formatDateTime(new Date().toISOString()));
+      if(!silent) showToast("Data berjaya disimpan ke pangkalan data pusat.", "ok");
+      success = true;
+    } else {
+      throw new Error((data && data.error) || "Ralat tidak diketahui");
     }
-    markSaved();
-    try{
-      sessionStorage.setItem("kejohanan2026_session", JSON.stringify({school:currentSchoolLabel, key:currentSchool, token:authToken, role:authRole}));
-    }catch(e){ /* ignore */ }
-    logAction("simpan", currentSchoolLabel, "Data disimpan ke pangkalan data pusat pada " + formatDateTime(new Date().toISOString()));
-    if(!silent) showToast("Data berjaya disimpan ke pangkalan data pusat.", "ok");
-    success = true;
   }catch(err){
-    if(!silent) showToast("Gagal menyimpan: " + (err.message || "ralat pelayan"), "danger");
+    if(!silent) showToast("Gagal menyimpan ke pangkalan data pusat. Data masih selamat pada peranti ini.", "danger");
     console.error("saveToSheet error:", err);
+    success = false;
   }finally{
-    if(btn){ btn.disabled = false; btn.innerHTML = originalHtml; }
+    btn.disabled = false;
+    btn.innerHTML = originalHtml;
   }
   return success;
 }
@@ -2553,32 +2475,43 @@ async function saveAndLogout(){
 }
 
 async function fetchAllFromSheet(timeoutMs){
-  if(!isGasConfigured() || !authToken) return null;
+  if(!isGasConfigured()) return null;
+  const controller = new AbortController();
+  const timer = setTimeout(()=>controller.abort(), timeoutMs || 10000);
   try{
-    const data = await apiPost("getAllData", {token:authToken}, timeoutMs || 15000);
+    const url = GAS_WEB_APP_URL + "?secret=" + encodeURIComponent(API_SECRET) + "&_t=" + Date.now();
+    const res = await fetch(url, { method:"GET", signal:controller.signal, cache:"no-store" });
+    const data = await res.json();
+    clearTimeout(timer);
+    if(!data || !data.ok) return null;
     const bySchool = {};
-    (data.rows || []).forEach(row=>{
+    data.rows.forEach(row=>{
       const school = row.Sekolah;
-      if(!school) return;
-      if(!bySchool[school]) bySchool[school] = { pengurus:{nama:row.PengurusNama||"", tel:row.PengurusTel||""}, peserta:[] };
+      if(!bySchool[school]) bySchool[school] = { pengurus:{nama:row.PengurusNama, tel:row.PengurusTel}, peserta:[], _rowCounter:0 };
+      // Baris placeholder (pengurus sahaja, tiada peserta) — tidak dimasukkan sebagai peserta.
       if(!row.Nama && !row.NoPeserta) return;
+      // Guna pembilang baris (bukan semata-mata NoPeserta) supaya ID SENTIASA
+      // unik walaupun ada baris kongsi No. Peserta yang sama (data lapuk/pertindihan
+      // dalam Sheet) — ini elak amaran "ID berlanggar" berulang setiap kali data
+      // dimuat semula daripada Sheet.
+      bySchool[school]._rowCounter++;
       bySchool[school].peserta.push({
-        id: row.ParticipantID || ("legacy_"+school+"_"+row.NoPeserta+"_"+bySchool[school].peserta.length),
-        nama: row.Nama || "",
-        noOku: row.NoOKU || "",
-        umur: Number(row.Umur || 0),
-        kategori: row.Kategori || "",
-        jantina: row.Jantina || "",
-        noPeserta: String(row.NoPeserta || "").toUpperCase(),
+        id: "sheet_"+school+"_"+row.NoPeserta+"_"+bySchool[school]._rowCounter,
+        nama: row.Nama,
+        noOku: row.NoOKU,
+        umur: row.Umur,
+        kategori: row.Kategori,
+        jantina: row.Jantina,
+        noPeserta: String(row.NoPeserta).toUpperCase(),
         individu: row.AcaraIndividu ? String(row.AcaraIndividu).split(" | ").filter(Boolean) : [],
-        kumpulan: row.AcaraKumpulan ? String(row.AcaraKumpulan).split(" | ").filter(Boolean).map(ev=>normalizeLegacyGroupEventName(ev, row.Kategori || "")) : [],
-        relayOrder: normalizeRelayOrderMap((()=>{ try{return row.SusunanPelari ? JSON.parse(row.SusunanPelari) : {};}catch(e){return {};} })(), row.Kategori || ""),
-        createdAt: row.CreatedAt || row.Kemaskini || "",
-        updatedAt: row.UpdatedAt || row.Kemaskini || ""
+        kumpulan: row.AcaraKumpulan ? String(row.AcaraKumpulan).split(" | ").filter(Boolean) : [],
+        giliran: decodeGiliran(row.Giliran)
       });
     });
+    Object.values(bySchool).forEach(s=>{ delete s._rowCounter; });
     return bySchool;
   }catch(err){
+    clearTimeout(timer);
     console.error("fetchAllFromSheet error:", err);
     return null;
   }
@@ -2589,11 +2522,38 @@ async function fetchAllFromSheet(timeoutMs){
    terdedah dalam respons rangkaian semasa seseorang cuma log masuk sekolah
    sendiri. Tiada kunci rahsia diperlukan (skop data amat terhad). */
 async function fetchSchoolFromSheet(schoolName, timeoutMs){
-  if(!isGasConfigured() || !authToken) return null;
+  if(!isGasConfigured()) return null;
+  const controller = new AbortController();
+  const timer = setTimeout(()=>controller.abort(), timeoutMs || 8000);
   try{
-    const data = await apiPost("getSchoolData", {token:authToken, school:schoolName}, timeoutMs || 10000);
-    return data.schoolData || null;
+    const url = GAS_WEB_APP_URL + "?mode=school&name=" + encodeURIComponent(schoolName) + "&_t=" + Date.now();
+    const res = await fetch(url, { method:"GET", signal:controller.signal, cache:"no-store" });
+    const data = await res.json();
+    clearTimeout(timer);
+    if(!data || !data.ok || !data.rows) return null;
+    if(data.rows.length === 0) return null;
+
+    const result = { pengurus:{nama:data.rows[0].PengurusNama||"", tel:data.rows[0].PengurusTel||""}, peserta:[] };
+    let rowCounter = 0;
+    data.rows.forEach(row=>{
+      if(!row.Nama && !row.NoPeserta) return;
+      rowCounter++;
+      result.peserta.push({
+        id: "sheet_"+schoolName+"_"+row.NoPeserta+"_"+rowCounter,
+        nama: row.Nama,
+        noOku: row.NoOKU,
+        umur: row.Umur,
+        kategori: row.Kategori,
+        jantina: row.Jantina,
+        noPeserta: String(row.NoPeserta).toUpperCase(),
+        individu: row.AcaraIndividu ? String(row.AcaraIndividu).split(" | ").filter(Boolean) : [],
+        kumpulan: row.AcaraKumpulan ? String(row.AcaraKumpulan).split(" | ").filter(Boolean) : [],
+        giliran: decodeGiliran(row.Giliran)
+      });
+    });
+    return result;
   }catch(err){
+    clearTimeout(timer);
     console.error("fetchSchoolFromSheet error:", err);
     return null;
   }
@@ -2733,7 +2693,6 @@ bumpVisitCounter();
    LOGIN / SESSION
    ========================================================= */
 function switchRoleTab(role){
-  if(role === "guru") showToast("🔒 Pendaftaran pengurus telah ditutup. Akses penyuntingan hanya untuk Admin.", "warn");
   document.getElementById("tabGuru").classList.toggle("active", role==="guru");
   document.getElementById("tabAdmin").classList.toggle("active", role==="admin");
   document.getElementById("tabStatistik").classList.toggle("active", role==="statistik");
@@ -2744,7 +2703,6 @@ function switchRoleTab(role){
 
 function populateSchoolSelect(targetId){
   const sel = document.getElementById(targetId || "inpSekolah");
-  if(!sel) return;
   sel.innerHTML = "";
   const groups = {};
   SCHOOLS.forEach((s,idx)=>{
@@ -2763,54 +2721,175 @@ function populateSchoolSelect(targetId){
 
 let isFirstTimeRegistration = false;
 
-async function doLogin(){
-  const errEl = document.getElementById("loginError");
-  if(errEl){
-    errEl.textContent = "🔒 Pendaftaran pengurus telah ditutup.";
-    errEl.classList.add("show");
+/* =========================================================
+   KUNCI PENDAFTARAN — bila diaktifkan oleh Admin, Pengurus Pasukan
+   tidak lagi boleh log masuk/ubah data. Hanya Admin boleh urus
+   keseluruhan data peserta (No. Peserta, acara, nama, dll) selepas ini.
+   ========================================================= */
+let registrationLockedCache = null;
+
+async function checkRegistrationLocked(){
+  if(!isGasConfigured()){
+    return localStorage.getItem("kejohanan2026_reg_locked") === "1";
   }
-  showToast("🔒 Akses pengurus dikunci. Sila hubungi urus setia kejohanan untuk sebarang perubahan.", "warn");
+  try{
+    const res = await fetch(GAS_WEB_APP_URL + "?mode=lockState&_t=" + Date.now(), { method:"GET", cache:"no-store" });
+    const data = await res.json();
+    if(data && data.ok){
+      registrationLockedCache = data.locked;
+      return data.locked;
+    }
+  }catch(err){ console.error("checkRegistrationLocked error:", err); }
+  return false;
 }
 
-async function doAdminLogin(){
+function showLockedNotice(){
+  document.getElementById("loginError").classList.remove("show");
+  document.getElementById("pengurusLockedModal").classList.add("show");
+}
+
+function closePengurusLockedModal(){
+  document.getElementById("pengurusLockedModal").classList.remove("show");
+}
+
+async function toggleRegistrationLock(){
+  const newState = !(registrationLockedCache === true);
+  const btn = document.getElementById("btnToggleRegLock");
+  if(btn) btn.disabled = true;
+  if(isGasConfigured()){
+    try{
+      const res = await fetch(GAS_WEB_APP_URL, {
+        method:"POST",
+        headers:{ "Content-Type":"text/plain;charset=utf-8" },
+        body: JSON.stringify({ action:"setLockState", secret:API_SECRET, locked:newState })
+      });
+      const data = await res.json();
+      if(!(data && data.ok)) throw new Error("Gagal kemas kini status kunci.");
+    }catch(err){
+      showToast("Gagal kemas kini status kunci pendaftaran.", "danger");
+      if(btn) btn.disabled = false;
+      return;
+    }
+  } else {
+    localStorage.setItem("kejohanan2026_reg_locked", newState ? "1" : "0");
+  }
+  registrationLockedCache = newState;
+  renderRegLockButton();
+  showToast(newState ? "Pendaftaran DIKUNCI — Pengurus tidak boleh akses." : "Pendaftaran DIBUKA semula — Pengurus boleh akses.", "ok");
+  if(btn) btn.disabled = false;
+}
+
+function renderRegLockButton(){
+  const btn = document.getElementById("btnToggleRegLock");
+  if(!btn) return;
+  const locked = registrationLockedCache === true;
+  btn.innerHTML = locked
+    ? '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Pendaftaran Terkunci'
+    : '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg> Kunci Pendaftaran';
+  btn.classList.toggle("reg-locked-active", locked);
+  btn.title = locked ? "Klik untuk buka semula akses Pengurus" : "Klik untuk kunci akses Pengurus (Admin sahaja boleh ubah data selepas ini)";
+}
+
+async function doLogin(){
+  const idxRaw = document.getElementById("inpSekolah").value;
+  const enteredPhone = document.getElementById("inpPassword").value.trim();
+  const errEl = document.getElementById("loginError");
+  const btn = document.getElementById("btnLogin");
+
+  if(idxRaw === ""){
+    errEl.textContent = "Sila pilih nama sekolah.";
+    errEl.classList.add("show");
+    return;
+  }
+  const normalizedPhone = normalizePhone(enteredPhone);
+  if(normalizedPhone.length < 8){
+    errEl.textContent = "Sila masukkan nombor telefon yang sah (sekurang-kurangnya 8 digit).";
+    errEl.classList.add("show");
+    return;
+  }
+  errEl.classList.remove("show");
+
+  const locked = await checkRegistrationLocked();
+  if(locked){
+    showLockedNotice();
+    return;
+  }
+
+  const idx = parseInt(idxRaw, 10);
+  const school = SCHOOLS[idx];
+  currentSchoolLabel = school.name;
+  currentSchool = normaliseSchool(currentSchoolLabel);
+
+  // Tarik data terkini sekolah ini (jika ada) supaya senarai peserta sedia ada
+  // terus kelihatan tidak kira peranti/pelayar mana pengurus log masuk.
+  let data = loadSchoolData(currentSchool);
+  const originalHtml = btn.innerHTML;
+  if(isGasConfigured()){
+    btn.disabled = true;
+    btn.innerHTML = "Memuatkan data sekolah...";
+    const sheetData = await fetchSchoolFromSheet(currentSchoolLabel, 8000);
+    btn.disabled = false;
+    btn.innerHTML = originalHtml;
+    if(sheetData) data = sheetData;
+  }
+
+  data.pengurus.tel = normalizedPhone;
+  schoolData = data;
+  unsavedChanges = false;
+  localStorage.setItem("kejohanan2026_session", JSON.stringify({school:currentSchoolLabel, key:currentSchool}));
+
+  const wasRepaired = repairDuplicateIds();
+  persistSchoolData();
+  if(wasRepaired){
+    logAction("baik-pulih", currentSchoolLabel, "ID peserta berlanggar dikesan dan dibaiki automatik pada " + formatDateTime(new Date().toISOString()));
+    if(isGasConfigured() && schoolData.pengurus.nama){
+      saveToSheet(true);
+    }
+  }
+
+  if(!schoolData.pengurus.nama){
+    isFirstTimeRegistration = true;
+    document.getElementById("inpPengurusNama").value = "";
+    document.getElementById("inpPengurusTel").value = normalizedPhone;
+    document.getElementById("pengurusFirstTimeNote").style.display = "block";
+    document.getElementById("pengurusError").classList.remove("show");
+    document.getElementById("pengurusModal").classList.add("show");
+  } else {
+    isFirstTimeRegistration = false;
+    enterApp();
+  }
+}
+
+function doAdminLogin(){
   const id = document.getElementById("inpAdminId").value.trim();
   const pw = document.getElementById("inpAdminPassword").value;
   const errEl = document.getElementById("adminLoginError");
+
   const lockRemaining = checkLoginLockout("admin");
   if(lockRemaining > 0){
     errEl.textContent = "Terlalu banyak percubaan gagal. Sila cuba lagi selepas " + formatLockoutRemaining(lockRemaining) + ".";
     errEl.classList.add("show");
     return;
   }
-  if(!isGasConfigured()){
-    errEl.textContent = "URL Google Apps Script belum dikonfigurasi.";
+
+  if(id !== ADMIN_ID || pw !== ADMIN_PASSWORD){
+    const state = recordFailedLogin("admin");
+    const remainingAttempts = MAX_LOGIN_ATTEMPTS - state.count;
+    errEl.textContent = remainingAttempts > 0
+      ? "ID atau kata laluan salah. (" + remainingAttempts + " percubaan lagi sebelum disekat sementara)"
+      : "Terlalu banyak percubaan gagal. Sila cuba lagi selepas " + formatLockoutRemaining(LOGIN_LOCKOUT_MS) + ".";
     errEl.classList.add("show");
     return;
   }
-  try{
-    await verifyDatabaseBinding(true);
-    const auth = await apiPost("authAdmin", {id:id, password:pw}, 12000);
-    authToken = auth.token;
-    authRole = "admin";
-    clearLoginAttempts("admin");
-    errEl.classList.remove("show");
-    document.getElementById("loginScreen").style.display = "none";
-    document.getElementById("adminApp").style.display = "block";
-    moveResultsModuleTo("adminResultsSlot");
-    applyResultsAccessMode();
-    sheetDataCache = null;
-    await loadAdminData();
-  }catch(err){
-    const state = recordFailedLogin("admin");
-    const remainingAttempts = Math.max(0, MAX_LOGIN_ATTEMPTS - state.count);
-    errEl.textContent = (err.message || "Log masuk gagal.") + (remainingAttempts > 0 ? " ("+remainingAttempts+" percubaan lagi)" : "");
-    errEl.classList.add("show");
-  }
+  errEl.classList.remove("show");
+  clearLoginAttempts("admin");
+  document.getElementById("loginScreen").style.display = "none";
+  document.getElementById("adminApp").style.display = "block";
+  moveResultsModuleTo("adminResultsSlot");
+  loadAdminData();
 }
 
 function doAdminLogout(){
-  if(authRole === "admin"){ authToken = ""; authRole = ""; }
-  sheetDataCache = null;
   document.getElementById("adminApp").style.display = "none";
   document.getElementById("loginScreen").style.display = "flex";
   document.getElementById("inpAdminId").value = "";
@@ -2818,45 +2897,36 @@ function doAdminLogout(){
   loadPublicStats(); loadPublicResults(); renderEventSchedule("Public"); renderOlahragawanPanel("_Public");
 }
 
-async function doStatistikLogin(){
+function doStatistikLogin(){
   const id = document.getElementById("inpStatistikId").value.trim();
   const pw = document.getElementById("inpStatistikPassword").value;
   const errEl = document.getElementById("statistikLoginError");
+
   const lockRemaining = checkLoginLockout("statistik");
   if(lockRemaining > 0){
     errEl.textContent = "Terlalu banyak percubaan gagal. Sila cuba lagi selepas " + formatLockoutRemaining(lockRemaining) + ".";
     errEl.classList.add("show");
     return;
   }
-  if(!isGasConfigured()){
-    errEl.textContent = "URL Google Apps Script belum dikonfigurasi.";
+
+  if(id !== STATISTIK_ID || pw !== STATISTIK_PASSWORD){
+    const state = recordFailedLogin("statistik");
+    const remainingAttempts = MAX_LOGIN_ATTEMPTS - state.count;
+    errEl.textContent = remainingAttempts > 0
+      ? "ID atau kata laluan salah. (" + remainingAttempts + " percubaan lagi sebelum disekat sementara)"
+      : "Terlalu banyak percubaan gagal. Sila cuba lagi selepas " + formatLockoutRemaining(LOGIN_LOCKOUT_MS) + ".";
     errEl.classList.add("show");
     return;
   }
-  try{
-    await verifyDatabaseBinding(true);
-    const auth = await apiPost("authStatistik", {id:id, password:pw}, 12000);
-    authToken = auth.token;
-    authRole = "statistik";
-    clearLoginAttempts("statistik");
-    errEl.classList.remove("show");
-    document.getElementById("loginScreen").style.display = "none";
-    document.getElementById("statistikApp").style.display = "block";
-    moveResultsModuleTo("statistikResultsSlot");
-    applyResultsAccessMode();
-    sheetDataCache = null;
-    await loadStatistikData();
-  }catch(err){
-    const state = recordFailedLogin("statistik");
-    const remainingAttempts = Math.max(0, MAX_LOGIN_ATTEMPTS - state.count);
-    errEl.textContent = (err.message || "Log masuk gagal.") + (remainingAttempts > 0 ? " ("+remainingAttempts+" percubaan lagi)" : "");
-    errEl.classList.add("show");
-  }
+  errEl.classList.remove("show");
+  clearLoginAttempts("statistik");
+  document.getElementById("loginScreen").style.display = "none";
+  document.getElementById("statistikApp").style.display = "block";
+  moveResultsModuleTo("statistikResultsSlot");
+  loadStatistikData();
 }
 
 function doStatistikLogout(){
-  if(authRole === "statistik"){ authToken = ""; authRole = ""; }
-  sheetDataCache = null;
   document.getElementById("statistikApp").style.display = "none";
   document.getElementById("loginScreen").style.display = "flex";
   document.getElementById("inpStatistikId").value = "";
@@ -2875,26 +2945,7 @@ function moveResultsModuleTo(slotId){
   }
 }
 
-function applyResultsAccessMode(){
-  const readOnly = authRole !== "admin";
-  const tag = document.getElementById("resultsAccessTag");
-  if(tag) tag.textContent = readOnly ? "Statistik: Paparan Sahaja 🔒" : "Admin: Kemasukan Keputusan";
-  document.querySelectorAll("#keputusanModulePanel input, #keputusanModulePanel select").forEach(el=>{
-    if(el.id === "resultsKategori" || el.id === "resultsAcara" || el.id === "resultsJantina") return;
-    el.disabled = readOnly;
-  });
-  const btn = document.getElementById("btnCalcResults");
-  if(btn){
-    btn.disabled = readOnly;
-    if(readOnly) btn.style.display = "none";
-  }
-}
-
 async function loadStatistikData(){
-  if(isGasConfigured() && authToken){
-    const fetched = await fetchAllFromSheet(15000);
-    if(fetched) sheetDataCache = fetched;
-  }
   populateResultsKategoriSelect();
   if(isGasConfigured()) await fetchResultsFromSheet();
   renderMedalTable("medalTableSKStatistik", buildMedalTally("SK"), "SK");
@@ -2936,12 +2987,12 @@ async function savePengurus(){
       }
     } else {
       markUnsaved();
-      showToast("Maklumat belum disimpan ke Google Sheet. Sila cuba semula.", "danger");
+      showToast("Maklumat disimpan pada peranti ini, tetapi gagal disegerak ke Google Sheet. Sila tekan Simpan.", "danger");
     }
   } else {
     markUnsaved();
     if(isFirstTimeReg){
-      showToast("Pendaftaran tidak boleh dibuat tanpa sambungan Google Sheet. Nombor " + telNormalized + " tidak disimpan.", "ok");
+      showToast("Pendaftaran disimpan pada peranti ini. Nombor " + telNormalized + " kini kata laluan sekolah anda (mod tempatan).", "ok");
     }
   }
 }
@@ -2969,7 +3020,7 @@ function enterApp(){
     tag.textContent = "Tersegerak ke pangkalan data pusat \u2014 " + formatDateTime(schoolData.lastSavedAt);
     tag.style.color = "var(--ok)";
   } else {
-    tag.textContent = isGasConfigured() ? "Belum pernah disegerak" : "Google Sheet belum dikonfigurasi";
+    tag.textContent = isGasConfigured() ? "Belum pernah disegerak" : "Mod tempatan sahaja (Sheet belum dikonfigurasi)";
     tag.style.color = "var(--muted)";
   }
   populateFilterKategoriOptions();
@@ -2994,32 +3045,35 @@ function confirmLogoutAnyway(){
 }
 
 function performLogout(){
-  try{
-    sessionStorage.removeItem("kejohanan2026_session");
-    localStorage.removeItem("kejohanan2026_session");
-  }catch(e){ /* ignore */ }
-  authToken = "";
-  authRole = "";
+  localStorage.removeItem("kejohanan2026_session");
   currentSchool = null;
   currentSchoolLabel = null;
   schoolData = { pengurus:{nama:"", tel:""}, peserta:[] };
   document.getElementById("app").style.display = "none";
   document.getElementById("loginScreen").style.display = "flex";
-  const lockedPasswordField = document.getElementById("inpPassword");
-  if(lockedPasswordField) lockedPasswordField.value = "";
+  document.getElementById("inpPassword").value = "";
   loadPublicStats(); loadPublicResults(); renderEventSchedule("Public"); renderOlahragawanPanel("_Public");
 }
 
-async function tryRestoreSession(){
+function tryRestoreSession(){
   try{
-    localStorage.removeItem("kejohanan2026_session");
-    const raw = sessionStorage.getItem("kejohanan2026_session");
+    const raw = localStorage.getItem("kejohanan2026_session");
     if(!raw) return;
     const sess = JSON.parse(raw);
-    if(sess && sess.role === "school") sessionStorage.removeItem("kejohanan2026_session");
-  }catch(e){
-    try{ sessionStorage.removeItem("kejohanan2026_session"); }catch(ignore){}
-  }
+    if(!sess.key) return;
+    currentSchool = sess.key;
+    currentSchoolLabel = sess.school;
+    schoolData = loadSchoolData(currentSchool);
+    unsavedChanges = false;
+    const wasRepaired = repairDuplicateIds();
+    if(wasRepaired){
+      persistSchoolData();
+      logAction("baik-pulih", currentSchoolLabel, "ID peserta berlanggar dikesan dan dibaiki automatik pada " + formatDateTime(new Date().toISOString()));
+    }
+    if(schoolData.pengurus.nama && schoolData.pengurus.tel){
+      enterApp();
+    }
+  }catch(e){ /* ignore */ }
 }
 
 /* =========================================================
@@ -3175,31 +3229,20 @@ function renderEventCheckboxes(){
     individuWrap.appendChild(label);
   });
 
-  const kumpulanList = getKumpulanBaseEvents(kategori, true);
+  const kumpulanList = evConf.kumpulan.slice();
+  if(OPEN_KUMPULAN_CATEGORIES.includes(kategori)) kumpulanList.push(OPEN_KUMPULAN_EVENT);
 
   kumpulanList.forEach(baseName=>{
-    const openConf = getOpenKumpulanConfig(baseName);
-    const isOpen = !!openConf;
+    const isOpen = baseName === OPEN_KUMPULAN_EVENT;
     ["A","B","C","D"].forEach(team=>{
       const evName = baseName + " — Pasukan " + team;
       const label = document.createElement("label");
       label.className = "event-check";
       const checked = selectedKumpulan.includes(evName);
-      const savedOrder = editingPeserta && editingPeserta.relayOrder ? Number(editingPeserta.relayOrder[evName] || 0) : 0;
       if(checked) label.classList.add("checked");
-      const need = requiredTeamSize(baseName) || 4;
-      const orderOptions = ['<option value="">-- Tetapkan susunan --</option>']
-        .concat(Array.from({length:need},(_,i)=>`<option value="${i+1}" ${savedOrder===i+1?'selected':''}>Pelari ${i+1}</option>`)).join("");
-      const orderHtml = (adminEditMode && authRole === "admin") ? `
-        <span class="relay-order-wrap">
-          <span class="relay-order-label">Susunan pelari</span>
-          <select class="relay-order-select" data-event="${escapeHtml(evName)}" ${checked?'':'disabled'} onclick="event.stopPropagation();" onchange="event.stopPropagation();">
-            ${orderOptions}
-          </select>
-        </span>` : "";
       label.innerHTML = `
         <input type="checkbox" data-type="kumpulan" value="${evName}" ${checked?"checked":""} onchange="onEventCheckChange(this)">
-        <span class="ename">${evName}${(isOpen && team==="A") ? `<span class="ehint">${openConf.hint}</span>` : ''}${team!=="A" ? '<span class="ehint">Pasukan tambahan sekolah</span>' : ''}${orderHtml}</span>
+        <span class="ename">${evName}${(isOpen && team==="A") ? '<span class="ehint">Terbuka — semua kategori umur boleh menyertai</span>' : ""}${team!=="A" ? '<span class="ehint">Guna Pasukan '+team+' jika sekolah menghantar lebih daripada '+(team==="B"?"1":team==="C"?"2":"3")+' pasukan untuk acara ini</span>' : ""}</span>
       `;
       kumpulanWrap.appendChild(label);
     });
@@ -3212,13 +3255,7 @@ function renderEventCheckboxes(){
 function onEventCheckChange(el){
   applyEventSelectionLimits();
   updateEventCountTags();
-  const card = el.closest(".event-check");
-  card.classList.toggle("checked", el.checked);
-  const orderSel = card.querySelector(".relay-order-select");
-  if(orderSel){
-    orderSel.disabled = !el.checked;
-    if(!el.checked) orderSel.value = "";
-  }
+  el.closest(".event-check").classList.toggle("checked", el.checked);
 }
 
 function applyEventSelectionLimits(){
@@ -3261,7 +3298,7 @@ function updateEventCountTags(){
    MODAL OPEN / CLOSE
    ========================================================= */
 function openAddModal(){
-  document.getElementById("pesertaModalTitle").textContent = adminEditMode ? ("Tambah Peserta — " + currentSchoolLabel) : "Tambah Peserta";
+  document.getElementById("pesertaModalTitle").textContent = "Tambah Peserta";
   document.getElementById("editId").value = "";
   document.getElementById("fNama").value = "";
   document.getElementById("fOku").value = "";
@@ -3299,19 +3336,6 @@ function openAdminEditModal(schoolIdx){
 function adminEditPeserta(schoolIdx, pesertaId){
   openAdminEditModal(schoolIdx);
   openEditModal(pesertaId);
-}
-
-function adminAddPeserta(){
-  const sel = document.getElementById("adminFilterSekolah");
-  if(!sel || sel.value === ""){
-    showToast("Pilih satu sekolah pada penapis 'Semua Sekolah' dahulu sebelum menambah peserta.", "warn");
-    if(sel) sel.focus();
-    return;
-  }
-  const schoolIdx = Number(sel.value);
-  if(!openAdminEditModal(schoolIdx)) return;
-  openAddModal();
-  document.getElementById("pesertaModalTitle").textContent = "Tambah Peserta — " + currentSchoolLabel;
 }
 
 function adminDeletePeserta(schoolIdx, pesertaId){
@@ -3401,7 +3425,7 @@ function repairDuplicateIds(){
    di atas versi terkini itu — bukan tulis-ganti seluruh senarai lama.
    ========================================================= */
 async function mergeAndSaveToSheet(record, isDelete){
-  if(isGasConfigured() && (authRole === "admin" || (schoolData.pengurus.nama && schoolData.pengurus.tel))){
+  if(isGasConfigured() && schoolData.pengurus.nama && schoolData.pengurus.tel){
     try{
       const fresh = await fetchSchoolFromSheet(currentSchoolLabel, 8000);
       if(fresh){
@@ -3457,12 +3481,6 @@ async function savePeserta(){
 
   const individu = [...document.querySelectorAll('#individuEvents input[type=checkbox]:checked')].map(b=>b.value);
   const kumpulan = [...document.querySelectorAll('#kumpulanEvents input[type=checkbox]:checked')].map(b=>b.value);
-  const relayOrder = {};
-  document.querySelectorAll('#kumpulanEvents input[type=checkbox]:checked').forEach(box=>{
-    const sel = box.closest('.event-check').querySelector('.relay-order-select');
-    const order = sel ? Number(sel.value || 0) : 0;
-    if(order) relayOrder[box.value] = order;
-  });
 
   if(individu.length === 0 && kumpulan.length === 0){
     formErr.textContent = "Sila pilih sekurang-kurangnya satu acara untuk peserta ini.";
@@ -3473,17 +3491,6 @@ async function savePeserta(){
     formErr.textContent = "Had maksimum acara telah dilebihi (" + MAX_INDIVIDU + " individu dan " + MAX_KUMPULAN + " berkumpulan sahaja).";
     formErr.classList.add("show");
     return;
-  }
-
-  for(const evName of kumpulan){
-    const order = Number(relayOrder[evName] || 0);
-    if(!order) continue;
-    const clash = schoolData.peserta.find(p=>p.id !== id && (p.kumpulan||[]).includes(evName) && Number((p.relayOrder||{})[evName] || 0) === order);
-    if(clash){
-      formErr.textContent = "Susunan Pelari " + order + " untuk '" + evName + "' telah digunakan oleh " + clash.nama + ".";
-      formErr.classList.add("show");
-      return;
-    }
   }
 
   // sahkan semula kuota acara individu (padang & balapan) semasa simpan
@@ -3501,12 +3508,14 @@ async function savePeserta(){
 
   const nowIso = new Date().toISOString();
   const isEdit = !!id;
+  const existingRecord = isEdit ? schoolData.peserta.find(p=>p.id===id) : null;
   const record = {
     id: id || generateUniqueId(),
     nama, noOku, umur, jantina, kategori,
     noPeserta: noPesertaFinal,
-    individu, kumpulan, relayOrder,
-    createdAt: isEdit ? (schoolData.peserta.find(p=>p.id===id).createdAt || nowIso) : nowIso,
+    individu, kumpulan,
+    giliran: (existingRecord && existingRecord.giliran) ? existingRecord.giliran : {},
+    createdAt: isEdit ? (existingRecord.createdAt || nowIso) : nowIso,
     updatedAt: nowIso
   };
 
@@ -3534,17 +3543,17 @@ async function savePeserta(){
 
   let syncOk = false;
   let syncMessage = "";
-  if(isGasConfigured() && (authRole === "admin" || (schoolData.pengurus.nama && schoolData.pengurus.tel))){
+  if(isGasConfigured() && schoolData.pengurus.nama && schoolData.pengurus.tel){
     syncOk = await mergeAndSaveToSheet(record, false);
     if(!syncOk){
       markUnsaved();
-      syncMessage = "⚠️ Perubahan belum disimpan ke Google Sheet. Sila cuba semula sebelum meninggalkan halaman.";
+      syncMessage = "⚠️ Disimpan pada peranti ini, tetapi GAGAL disegerak ke Google Sheet. Sila tekan butang Simpan di header sebelum log keluar.";
     } else {
       syncMessage = "✅ Berjaya disegerak ke pangkalan data pusat (Google Sheet).";
     }
   } else {
     markUnsaved();
-    syncMessage = "⚠️ Google Sheet belum tersedia. Perubahan tidak disimpan.";
+    syncMessage = "⚠️ Mod tempatan sahaja (Google Sheet belum dikonfigurasi). Sila tekan butang Simpan di header supaya data ini tidak hilang.";
   }
 
   showRegConfirmPopup(record, isEdit, syncOk, syncMessage);
@@ -3607,17 +3616,17 @@ async function confirmDeletePeserta(){
     renderAdminAcaraBreakdown();
   }
 
-  if(isGasConfigured() && (authRole === "admin" || (schoolData.pengurus.nama && schoolData.pengurus.tel))){
+  if(isGasConfigured() && schoolData.pengurus.nama && schoolData.pengurus.tel){
     const success = await mergeAndSaveToSheet(id, true);
     if(success){
       showToast("Peserta dipadam dan disegerak ke pangkalan data pusat.", "ok");
     } else {
       markUnsaved();
-      showToast("Peserta belum dipadam daripada Google Sheet. Sila cuba semula.", "danger");
+      showToast("Peserta dipadam pada peranti ini, tetapi gagal disegerak ke Google Sheet. Sila tekan Simpan.", "danger");
     }
   } else {
     markUnsaved();
-    showToast("Permintaan padam belum disahkan oleh Google Sheet.", "warn");
+    showToast("Peserta telah dipadam.", "warn");
   }
 }
 
@@ -3683,10 +3692,9 @@ function escapeHtml(str){
 }
 
 function requiredTeamSize(evName){
-  const compact = String(evName || "").toUpperCase().replace(/\s+/g, "");
-  if(compact.startsWith("4X100M")) return 4;
-  if(compact.startsWith("4X50M")) return 4;
-  if(compact.startsWith("2X50M")) return 2;
+  if(evName.startsWith("4X100M")) return 4;
+  if(evName.startsWith("4X50M")) return 4;
+  if(evName.startsWith("2X50M")) return 2;
   return null;
 }
 
@@ -3774,7 +3782,7 @@ function exportCSV(){
     showToast("Tiada data peserta untuk dimuat turun.", "warn");
     return;
   }
-  const headers = ["No Badan","Nama","No Kad OKU","Umur","Kategori","Jantina","Acara Individu","Acara Kumpulan","Susunan Pelari"];
+  const headers = ["No Peserta","Nama","No Kad OKU","Umur","Kategori","Jantina","Acara Individu","Acara Kumpulan"];
   const rows = schoolData.peserta
     .slice()
     .sort((a,b)=> String(a.noPeserta).localeCompare(String(b.noPeserta)))
@@ -3786,8 +3794,7 @@ function exportCSV(){
       CATEGORY_META[p.kategori].label,
       p.jantina === "L" ? "Lelaki" : "Perempuan",
       p.individu.join(" | "),
-      p.kumpulan.join(" | "),
-      Object.keys(p.relayOrder||{}).map(ev=>ev+" = Pelari "+p.relayOrder[ev]).join(" | ")
+      p.kumpulan.join(" | ")
     ]);
   const csvContent = [headers, ...rows]
     .map(r => r.map(cell => `"${String(cell).replace(/"/g,'""')}"`).join(","))
@@ -3811,7 +3818,7 @@ let sheetDataCache = null;
 function getAllSchoolsData(){
   return SCHOOLS.map(s=>{
     const key = normaliseSchool(s.name);
-    const data = (sheetDataCache && sheetDataCache[s.name]) ? sheetDataCache[s.name] : emptySchoolData();
+    const data = (sheetDataCache && sheetDataCache[s.name]) ? sheetDataCache[s.name] : loadSchoolData(key);
     return { school:s, key, data };
   });
 }
@@ -3855,12 +3862,13 @@ async function repairAllSchoolsDuplicateIds(){
     });
     if(repaired){
       anyRepaired = true;
+      try{ localStorage.setItem(storageKey(x.key), JSON.stringify(x.data)); }catch(e){ /* ignore */ }
       if(isGasConfigured() && x.data.pengurus.nama){
         try{
           await fetch(GAS_WEB_APP_URL, {
             method:"POST",
             headers:{ "Content-Type":"text/plain;charset=utf-8" },
-            body: JSON.stringify({ action:"saveSchool", token: authToken, school: x.school.name, pengurus: x.data.pengurus, peserta: x.data.peserta })
+            body: JSON.stringify({ action:"saveSchool", secret: API_SECRET, school: x.school.name, pengurus: x.data.pengurus, peserta: x.data.peserta })
           });
         }catch(err){ console.error("repairAllSchoolsDuplicateIds sync error:", err); }
       }
@@ -3882,24 +3890,21 @@ async function loadAdminData(){
   if(statusEl) statusEl.textContent = isGasConfigured() ? "Dikonfigurasi" : "Belum dikonfigurasi — edit GAS_WEB_APP_URL dalam kod sumber";
   if(sourceEl) sourceEl.textContent = "Memuatkan data...";
 
+  registrationLockedCache = await checkRegistrationLocked();
+  renderRegLockButton();
+
   if(isGasConfigured()){
-    try{
-      await verifyDatabaseBinding();
-      const fetched = await fetchAllFromSheet();
-      if(!fetched) throw new Error("Data tidak dapat dimuatkan.");
+    const fetched = await fetchAllFromSheet();
+    if(fetched){
       sheetDataCache = fetched;
-      if(statusEl) statusEl.textContent = "Dikonfigurasi & disahkan";
-      if(sourceEl) sourceEl.textContent = "Sumber data: Google Sheet 1byzkE99K3q1D1F2-hRTCwFkftqIaD5pXOMMtaMTDkFk";
-    }catch(err){
-      sheetDataCache = {};
-      if(statusEl) statusEl.textContent = "Sambungan gagal";
-      if(sourceEl) sourceEl.textContent = "Google Sheet tidak dapat dicapai — data tidak dipaparkan";
-      showToast(err.message || "Gagal memuatkan Google Sheet.", "danger");
+      if(sourceEl) sourceEl.textContent = "Sumber data: Google Sheet (pangkalan data pusat)";
+    } else {
+      sheetDataCache = null;
+      if(sourceEl) sourceEl.textContent = "Sumber data: Pelayar tempatan (gagal capai Google Sheet)";
     }
   } else {
-    sheetDataCache = {};
-    if(statusEl) statusEl.textContent = "Belum dikonfigurasi";
-    if(sourceEl) sourceEl.textContent = "Google Sheet belum dikonfigurasi — data tidak dipaparkan";
+    sheetDataCache = null;
+    if(sourceEl) sourceEl.textContent = "Sumber data: Pelayar tempatan sahaja";
   }
 
   populateAdminFilters();
@@ -3920,23 +3925,23 @@ async function loadAdminData(){
 }
 
 /* =========================================================
-   KEJOHANAN — KEPUTUSAN & KEDUDUKAN
+   KEJOHANAN — KEPUTUSAN & KEDUDUKAN (Admin sahaja)
    ========================================================= */
 let resultsDataCache = {};
 let currentResultsContext = null;
 
 function loadResultsCacheFromLocal(){
-  resultsDataCache = {};
+  try{ resultsDataCache = JSON.parse(localStorage.getItem("kejohanan2026_results_cache") || "{}"); }
+  catch(e){ resultsDataCache = {}; }
 }
 function persistResultsCacheLocal(){
-  // Google Sheet "Keputusan" ialah sumber rasmi; tiada cache keputusan tempatan.
+  try{ localStorage.setItem("kejohanan2026_results_cache", JSON.stringify(resultsDataCache)); }
+  catch(e){ /* ignore */ }
 }
 
 async function fetchResultsFromSheet(){
-  resultsDataCache = {};
   if(!isGasConfigured()) return;
   try{
-    await verifyDatabaseBinding();
     const res = await fetch(GAS_WEB_APP_URL + "?mode=results&_t=" + Date.now(), { method:"GET", cache:"no-store" });
     const data = await res.json();
     if(!data || !data.ok) return;
@@ -4022,7 +4027,8 @@ function onResultsKategoriChange(){
   });
   sel.appendChild(indivGroup);
 
-  const kumBaseNames = getKumpulanBaseEvents(kategori, false);
+  const kumBaseNames = evConf.kumpulan.slice();
+  if(OPEN_KUMPULAN_CATEGORIES.includes(kategori)) kumBaseNames.push(OPEN_KUMPULAN_EVENT);
   if(kumBaseNames.length){
     const kumGroup = document.createElement("optgroup");
     kumGroup.label = "Acara Berkumpulan (Berpasukan)";
@@ -4048,46 +4054,26 @@ function getResultEntries(kategori, type, baseName, jantina){
       });
     });
   } else {
+    // Acara kumpulan (relay) sedia berpasukan campur (2L2P/4L4P) — tidak diasingkan ikut jantina.
+    // Kumpul juga NAMA setiap atlet dalam pasukan tersebut, bukan cuma nama pasukan.
     const seen = {};
-    all.forEach(x=>{
+    all.forEach((x, schoolIdx)=>{
       x.data.peserta.forEach(p=>{
-        const openConf = getOpenKumpulanConfig(baseName);
-        const categoryMatches = openConf
-          ? openConf.categories.includes(p.kategori)
-          : p.kategori === kategori;
-        if(!categoryMatches) return;
-        p.kumpulan.forEach(evFullRaw=>{
-          const evFull = normalizeLegacyGroupEventName(evFullRaw, p.kategori);
+        if(p.kategori !== kategori) return;
+        p.kumpulan.forEach(evFull=>{
           if(evFull.indexOf(baseName) === 0){
             const key = x.school.name + "|" + evFull;
             if(!seen[key]){
               seen[key] = { entryKey: key, label: evFull, sekolah: x.school.name, athletes: [] };
               entries.push(seen[key]);
             }
-            seen[key].athletes.push({
-              nama: p.nama,
-              noPeserta: p.noPeserta,
-              jantina: p.jantina,
-              order: Number((p.relayOrder||{})[evFull] || 0)
-            });
+            seen[key].athletes.push({ id: p.id, schoolIdx: schoolIdx, nama: p.nama, noPeserta: p.noPeserta, giliran: (p.giliran && p.giliran[evFull]) || null });
           }
         });
       });
     });
-    entries.forEach(en=>{
-      en.athletes.sort((a,b)=>(a.order||99)-(b.order||99) || String(a.noPeserta||"").localeCompare(String(b.noPeserta||"")) || a.nama.localeCompare(b.nama));
-    });
   }
   return entries;
-}
-
-function formatRelayAthletes(athletes){
-  return (athletes||[]).map(a=>{
-    const pos = a.order ? "Pelari " + a.order : "Belum susun";
-    const posClass = a.order ? "relay-position" : "relay-unset";
-    const bib = a.noPeserta ? "No. Badan " + escapeHtml(a.noPeserta) : "No. Badan —";
-    return `<div class="relay-athlete-line"><span class="${posClass}">${pos}</span><span class="relay-bib">${bib}</span><b>${escapeHtml(a.nama)}</b></div>`;
-  }).join("");
 }
 
 const HEAT_SIZE = 8;
@@ -4206,7 +4192,7 @@ function renderIndividuDashboard(){
           if(colliding.length){
             html += `<div class="error-text show" style="margin:4px 0;">\u26A0\uFE0F Sekolah tak dapat diagihkan sepenuhnya (terlalu sedikit sekolah/saringan): ${colliding.map(s=>escapeHtml(s)+" ("+schoolCounts[s]+")").join(", ")}. Guna modul Keputusan &amp; "Pindah ke" untuk susun manual jika perlu.</div>`;
           }
-          html += `<table class="startlist-table"><thead><tr><th style="width:50px;">No.</th><th style="width:110px;">No. Badan</th><th>Nama</th><th>Sekolah</th><th style="width:110px;">Masa/Keputusan</th></tr></thead><tbody>` +
+          html += `<table class="startlist-table"><thead><tr><th style="width:50px;">No.</th><th style="width:90px;">No. Peserta</th><th>Nama</th><th>Sekolah</th><th style="width:110px;">Masa/Keputusan</th></tr></thead><tbody>` +
             group.map((en,i)=>`<tr><td>${i+1}</td><td class="mono">${escapeHtml(en.noPeserta || "-")}</td><td><b>${escapeHtml(en.label)}</b></td><td>${escapeHtml(en.sekolah)}</td><td></td></tr>`).join("") +
             `</tbody></table>`;
         });
@@ -4219,6 +4205,40 @@ function renderIndividuDashboard(){
 
 /* Dashboard penuh — semua acara BERKUMPULAN/relay merentas semua kategori,
    terus papar nama setiap atlet dalam setiap pasukan (tiada perlu klik). */
+function isAdminContext(){
+  return dashboardReturnPage === "adminApp";
+}
+
+/* Tetapkan giliran larian (1-4) seorang atlet dalam SATU acara berkumpulan
+   tertentu — khas Admin sahaja. Guna semula sistem simpan selamat-gabung
+   (mergeAndSaveToSheet) supaya perubahan peranti lain tidak hilang. */
+async function setAthleteGiliran(schoolIdx, pesertaId, eventFullName, orderVal){
+  const all = getAllSchoolsData();
+  const x = all[schoolIdx];
+  if(!x) return;
+  const p = x.data.peserta.find(pp=>pp.id===pesertaId);
+  if(!p) return;
+
+  if(!p.giliran) p.giliran = {};
+  if(orderVal){
+    p.giliran[eventFullName] = parseInt(orderVal, 10);
+  } else {
+    delete p.giliran[eventFullName];
+  }
+
+  schoolData = x.data;
+  currentSchool = normaliseSchool(x.school.name);
+  currentSchoolLabel = x.school.name;
+  persistSchoolData();
+
+  if(isGasConfigured() && schoolData.pengurus.nama && schoolData.pengurus.tel){
+    await mergeAndSaveToSheet(p, false);
+  }
+
+  showToast("Giliran larian dikemaskini.", "ok");
+  renderKumpulanDashboard();
+}
+
 function renderKumpulanDashboard(){
   const wrap = document.getElementById("kumpulanDashboardWrap");
   if(!wrap) return;
@@ -4230,7 +4250,8 @@ function renderKumpulanDashboard(){
     const conf = EVENTS_BY_CATEGORY[kat];
     if(!conf) return;
     const meta = CATEGORY_META[kat];
-    const kumList = getKumpulanBaseEvents(kat, false);
+    let kumList = conf.kumpulan.slice();
+    if(OPEN_KUMPULAN_CATEGORIES.includes(kat)) kumList.push(OPEN_KUMPULAN_EVENT);
     kumList.forEach(ev=>{
       let entries = getResultEntries(kat, "KUM", ev, "");
       if(schoolFilter) entries = entries.filter(en=>en.sekolah === schoolFilter);
@@ -4240,15 +4261,24 @@ function renderKumpulanDashboard(){
         ? distributeEntriesToHeats(entries.map(en=>({entryKey:en.entryKey, label:en.label, sekolah:en.sekolah})), Math.ceil(entries.length / HEAT_SIZE))
         : [entries];
       html += `<div class="startlist-block">
-        <div class="startlist-head cat-${kat}">${escapeHtml(getKumpulanDisplayCategoryLabel(kat, ev))} \u2014 ${escapeHtml(ev)} <span class="event-quota-tag">${entries.length} pasukan</span></div>`;
+        <div class="startlist-head cat-${kat}">${escapeHtml(meta.label)} \u2014 ${escapeHtml(ev)} <span class="event-quota-tag">${entries.length} pasukan</span></div>`;
       groups.forEach((group, gi)=>{
         if(groups.length > 1){
           html += `<div class="startlist-heat-title">Acara Akhir ${gi+1}</div>`;
         }
-        html += `<table class="startlist-table"><thead><tr><th style="width:50px;">No.</th><th>Pasukan</th><th>Sekolah</th><th>Ahli Pasukan</th></tr></thead><tbody>` +
+        html += `<table class="startlist-table"><thead><tr><th style="width:50px;">No.</th><th>Pasukan</th><th>Sekolah</th><th>Ahli Pasukan (Giliran Larian)</th></tr></thead><tbody>` +
           group.map((en,i)=>{
             const original = entries.find(e=>e.entryKey === en.entryKey) || en;
-            const athletes = formatRelayAthletes(original.athletes||[]);
+            const athletes = (original.athletes||[]).map((a,ai)=>{
+              const bibPart = a.noPeserta ? ' <span class="mono" style="opacity:0.65;">(No. '+escapeHtml(a.noPeserta)+')</span>' : '';
+              const giliranPart = isAdminContext()
+                ? ` <select class="giliran-select" onchange="setAthleteGiliran(${a.schoolIdx}, '${a.id}', '${escapeHtml(en.label).replace(/'/g,"\\'")}', this.value)">
+                    <option value="">Giliran?</option>
+                    ${[1,2,3,4].map(n=>`<option value="${n}" ${a.giliran===n?"selected":""}>Pelari ${n}</option>`).join("")}
+                  </select>`
+                : (a.giliran ? ` <span class="giliran-badge">Pelari ${a.giliran}</span>` : "");
+              return `${ai+1}. ${escapeHtml(a.nama)}${bibPart}${giliranPart}`;
+            }).join("<br>");
             return `<tr><td>${i+1}</td><td><b>${escapeHtml(en.label)}</b></td><td>${escapeHtml(en.sekolah)}</td><td>${athletes}</td></tr>`;
           }).join("") +
           `</tbody></table>`;
@@ -4273,7 +4303,7 @@ function renderAllFormsList(){
         items.push({ kategori:kat, type:"IND", acara:ev, jantina, count:entries.length, isPadang:PADANG_EVENTS.includes(ev) });
       });
     });
-    getKumpulanBaseEvents(kat, false).forEach(ev=>{
+    conf.kumpulan.forEach(ev=>{
       const entries = getResultEntries(kat, "KUM", ev, "");
       if(entries.length === 0) return;
       items.push({ kategori:kat, type:"KUM", acara:ev, jantina:"MIX", count:entries.length, isPadang:false });
@@ -4290,7 +4320,7 @@ function renderAllFormsList(){
     items.map((it,idx)=>{
       const jantinaLabel = it.jantina === "MIX" ? "Berpasukan" : (it.jantina === "L" ? "Lelaki" : "Perempuan");
       return `<tr>
-        <td><span class="cat-card cat-${it.kategori}" style="display:inline-block;padding:2px 10px;cursor:pointer;" onclick="toggleFormsDetail(${idx})" title="Klik untuk lihat senarai penuh">${escapeHtml(it.type === "KUM" ? getKumpulanDisplayCategoryLabel(it.kategori, it.acara) : CATEGORY_META[it.kategori].label)}</span></td>
+        <td><span class="cat-card cat-${it.kategori}" style="display:inline-block;padding:2px 10px;cursor:pointer;" onclick="toggleFormsDetail(${idx})" title="Klik untuk lihat senarai penuh">${escapeHtml(CATEGORY_META[it.kategori].label)}</span></td>
         <td style="cursor:pointer;" onclick="toggleFormsDetail(${idx})" title="Klik untuk lihat senarai penuh"><u>${escapeHtml(it.acara)}</u></td>
         <td>${jantinaLabel}</td>
         <td>${it.count}</td>
@@ -4396,7 +4426,7 @@ function printFullStartList(){
       } else {
         html += `<table class="print-form-table"><thead><tr><th>No.</th><th>Pasukan</th><th>Sekolah</th><th>Ahli Pasukan</th></tr></thead><tbody>` +
           entries.map((en,i)=>{
-            const athletes = formatRelayAthletes(en.athletes||[]);
+            const athletes = (en.athletes||[]).map((a,ai)=>`${ai+1}. ${escapeHtml(a.nama)}${a.noPeserta?" (No. "+escapeHtml(a.noPeserta)+")":""}`).join("<br>");
             return `<tr><td>${i+1}</td><td>${escapeHtml(en.label)}</td><td>${escapeHtml(en.sekolah)}</td><td>${athletes}</td></tr>`;
           }).join("") +
           `</tbody></table>`;
@@ -4484,7 +4514,7 @@ function generatePrintForm(type){
   }
   const meta = PRINT_FORM_META[type];
   const jantinaLabel = ctx.jantinaGroup === "MIX" ? "Berpasukan (Campuran)" : (ctx.jantinaGroup === "L" ? "Lelaki" : "Perempuan");
-  const kategoriLabel = ctx.type === "KUM" ? getKumpulanDisplayCategoryLabel(ctx.kategori, ctx.baseName) : CATEGORY_META[ctx.kategori].label;
+  const kategoriLabel = CATEGORY_META[ctx.kategori].label;
 
   function buildTable(entries, heatLabel){
     const rows = entries.map((en,idx)=>{
@@ -4579,7 +4609,6 @@ function onResultsAcaraChange(){
   } else {
     renderFinalEntryList();
   }
-  applyResultsAccessMode();
 }
 
 function renderFinalEntryList(){
@@ -4606,10 +4635,7 @@ function renderFinalEntryList(){
       </div>`;
   }).join("");
 
-  calcBtn.style.display = authRole === "admin" ? "inline-flex" : "none";
-  if(authRole !== "admin"){
-    wrap.querySelectorAll("input").forEach(input=>input.disabled = true);
-  }
+  calcBtn.style.display = "inline-flex";
 
   if(existingResults.length){
     renderResultsOutput(existingResults, ctx.isPadang, ctx.baseName, ctx.kategori, ctx.jantinaGroup);
@@ -4739,10 +4765,6 @@ function confirmHeatAdvancers(){
 }
 
 async function calculateAndSaveResults(){
-  if(authRole !== "admin"){
-    showToast("Mod Statistik ialah paparan sahaja. Perubahan keputusan tidak dibenarkan.", "warn");
-    return;
-  }
   if(!currentResultsContext) return;
   const ctx = currentResultsContext;
   const kategori = ctx.kategori, baseName = ctx.baseName, isPadang = ctx.isPadang, entries = ctx.entries, jantinaGroup = ctx.jantinaGroup;
@@ -4769,20 +4791,27 @@ async function calculateAndSaveResults(){
   });
 
   const key = kategori + "||" + baseName + "||" + jantinaGroup;
-  try{
-    await apiPost("saveResults", {
-      token: authToken, kategori: kategori, acara: baseName,
-      jantina: jantinaGroup, entries: filled
-    }, 20000);
-    resultsDataCache[key] = filled;
-    renderResultsOutput(filled, isPadang, baseName, kategori, jantinaGroup);
-    const resultCategoryLabel = jantinaGroup === "MIX" ? getKumpulanDisplayCategoryLabel(kategori, baseName) : CATEGORY_META[kategori].label;
-    logAction("keputusan", baseName, "Keputusan " + resultCategoryLabel + " (" + (jantinaGroup==="MIX"?"Campuran":jantinaGroup==="L"?"Lelaki":"Perempuan") + ") - " + baseName + " disimpan pada Google Sheet pada " + formatDateTime(new Date().toISOString()));
-    showToast("Keputusan berjaya disimpan ke Google Sheet.", "ok");
-  }catch(err){
-    console.error("saveResults error:", err);
-    showToast("Keputusan gagal disimpan: " + (err.message || "ralat pelayan"), "danger");
-    return;
+  resultsDataCache[key] = filled;
+  persistResultsCacheLocal();
+
+  renderResultsOutput(filled, isPadang, baseName, kategori, jantinaGroup);
+  showToast("Keputusan dikira dan disimpan.", "ok");
+  logAction("keputusan", baseName, "Keputusan " + CATEGORY_META[kategori].label + " (" + (jantinaGroup==="MIX"?"Campuran":jantinaGroup==="L"?"Lelaki":"Perempuan") + ") - " + baseName + " dikira & disimpan pada " + formatDateTime(new Date().toISOString()));
+
+  if(isGasConfigured()){
+    try{
+      const res = await fetch(GAS_WEB_APP_URL, {
+        method:"POST",
+        headers:{ "Content-Type":"text/plain;charset=utf-8" },
+        body: JSON.stringify({ action:"saveResults", secret: API_SECRET, kategori: kategori, acara: baseName, jantina: jantinaGroup, entries: filled })
+      });
+      const data = await res.json();
+      if(!data || !data.ok) throw new Error((data && data.error) || "ralat");
+      showToast("Keputusan turut disegerak ke Google Sheet.", "ok");
+    }catch(err){
+      console.error("saveResults error:", err);
+      showToast("Keputusan disimpan tempatan, tetapi gagal segerak ke Google Sheet.", "danger");
+    }
   }
 
   if(document.getElementById("medalTableSK")) renderMedalTable("medalTableSK", buildMedalTally("SK"), "SK");
@@ -4795,8 +4824,7 @@ function renderResultsOutput(sortedEntries, isPadang, baseName, kategori, jantin
   const wrap = document.getElementById("resultsOutputWrap");
   const unit = isPadang ? "m" : "s";
   const jantinaLabel = jantinaGroup==="MIX" ? "Campuran" : (jantinaGroup==="L" ? "Lelaki" : "Perempuan");
-  const outputCategoryLabel = jantinaGroup === "MIX" ? getKumpulanDisplayCategoryLabel(kategori, baseName) : CATEGORY_META[kategori].label;
-  const header = `<div class="section-label" style="margin-top:0;">Kedudukan \u2014 ${escapeHtml(outputCategoryLabel)} &middot; ${escapeHtml(baseName)} &middot; ${jantinaLabel}</div>`;
+  const header = `<div class="section-label" style="margin-top:0;">Kedudukan \u2014 ${escapeHtml(CATEGORY_META[kategori].label)} &middot; ${escapeHtml(baseName)} &middot; ${jantinaLabel}</div>`;
   const rows = sortedEntries.map(r=>{
     const medalClass = r.kedudukan===1?"emas":r.kedudukan===2?"perak":r.kedudukan===3?"gangsa":"ke4";
     const medalLabel = r.pingat || ("Ke-"+r.kedudukan);
@@ -4922,9 +4950,10 @@ function buildEventScheduleItems(){
       });
     });
 
-    const kumList = getKumpulanBaseEvents(kat, false);
+    let kumList = conf.kumpulan.slice();
+    if(OPEN_KUMPULAN_CATEGORIES.includes(kat)) kumList.push(OPEN_KUMPULAN_EVENT);
     kumList.forEach(ev=>{
-      trekItems.push({ kategori:kat, katLabel:getKumpulanDisplayCategoryLabel(kat, ev) + " (Berpasukan)", acara:ev, jantina:"", type:"KUM" });
+      trekItems.push({ kategori:kat, katLabel:meta.label + " (Berpasukan)", acara:ev, jantina:"", type:"KUM" });
     });
   });
 
@@ -4995,7 +5024,7 @@ async function toggleScheduleDetail(rowId){
     body.innerHTML = `<div style="font-size:13.5px;">` +
       entries.map((en,i)=>{
         const athleteList = (en.athletes && en.athletes.length)
-          ? `<div style="margin:6px 0 4px 20px;font-size:12px;">${formatRelayAthletes(en.athletes)}</div>`
+          ? `<div style="margin:6px 0 4px 20px;font-size:12px;">` + en.athletes.map((a,ai)=>`<div style="padding:1px 0;">${ai+1}. ${escapeHtml(a.nama)}${a.noPeserta ? ' (No. '+escapeHtml(a.noPeserta)+')' : ''}</div>`).join("") + `</div>`
           : "";
         return `<div class="results-entry-row" style="cursor:default;flex-direction:column;align-items:stretch;">
           <div class="re-label" style="flex:1;">${i+1}. <b>${escapeHtml(en.label)}</b><span class="re-school">${escapeHtml(en.sekolah)}</span></div>
@@ -5171,16 +5200,35 @@ async function confirmResetSchoolPassword(){
   const schoolName = pendingResetSchoolName;
   closeResetSchoolPasswordModal();
   if(!schoolName) return;
-  logAction("reset-kata-laluan", schoolName, "Kata laluan sekolah direset pada Google Sheet pada " + formatDateTime(new Date().toISOString()));
-  try{
-    await apiPost("resetSchoolPassword", {token:authToken, school:schoolName}, 12000);
-    sheetDataCache = null;
-    await loadAdminData();
-    showToast("Kata laluan " + schoolName + " berjaya direset.", "ok");
-  }catch(err){
-    console.error("resetSchoolPassword error:", err);
-    showToast("Gagal mereset kata laluan: " + (err.message || "ralat pelayan"), "danger");
+
+  const key = normaliseSchool(schoolName);
+  const data = loadSchoolData(key);
+  data.pengurus = { nama:"", tel:"" };
+  try{ localStorage.setItem(storageKey(key), JSON.stringify(data)); }catch(e){ /* ignore */ }
+
+  logAction("reset-kata-laluan", schoolName, "Kata laluan sekolah direset oleh admin pada " + formatDateTime(new Date().toISOString()));
+
+  if(isGasConfigured()){
+    try{
+      const res = await fetch(GAS_WEB_APP_URL, {
+        method:"POST",
+        headers:{ "Content-Type":"text/plain;charset=utf-8" },
+        body: JSON.stringify({ action:"resetSchoolPassword", secret: API_SECRET, school: schoolName })
+      });
+      const resData = await res.json();
+      if(!resData || !resData.ok) throw new Error((resData && resData.error) || "ralat");
+      showToast("Kata laluan " + schoolName + " berjaya direset (tempatan + Google Sheet).", "ok");
+    }catch(err){
+      console.error("resetSchoolPassword error:", err);
+      showToast("Direset pada peranti ini, tetapi gagal segerak ke Google Sheet.", "danger");
+    }
+  } else {
+    showToast("Kata laluan " + schoolName + " berjaya direset (mod tempatan).", "ok");
   }
+
+  sheetDataCache = null;
+  renderAdminPasswordTable();
+  renderPasswordLookup();
 }
 
 function populatePasswordLookupSelect(){
@@ -5259,6 +5307,7 @@ function resetAllData(){
   document.getElementById("resetConfirmInput").value = "";
   document.getElementById("resetConfirmError").classList.remove("show");
   document.getElementById("btnConfirmReset").disabled = true;
+  document.getElementById("resetModalSheetNote").textContent = isGasConfigured() ? " DAN Google Sheet pusat" : "";
   document.getElementById("resetConfirmModal").classList.add("show");
 }
 
@@ -5281,17 +5330,37 @@ async function confirmResetAllData(){
   }
   errEl.classList.remove("show");
   closeResetModal();
-  logAction("reset", "SEMUA SEKOLAH", "Reset keseluruhan data pada Google Sheet");
-  try{
-    await apiPost("resetAll", {token:authToken}, 20000);
-    sheetDataCache = {};
-    resultsDataCache = {};
-    showToast("Semua data Google Sheet telah direset.", "ok");
-    await loadAdminData();
-  }catch(err){
-    console.error("resetAllData sheet error:", err);
-    showToast("Gagal memadam data Google Sheet: " + (err.message || "ralat pelayan"), "danger");
+
+  // Padam cache tempatan bagi semua 40 sekolah
+  SCHOOLS.forEach(s=>{
+    localStorage.removeItem(storageKey(normaliseSchool(s.name)));
+  });
+
+  // Padam sesi semasa jika ada
+  localStorage.removeItem("kejohanan2026_session");
+  logAction("reset", "SEMUA SEKOLAH", "Reset keseluruhan data oleh admin");
+
+  // Padam data pada Google Sheet pusat, jika dikonfigurasi
+  if(isGasConfigured()){
+    try{
+      const res = await fetch(GAS_WEB_APP_URL, {
+        method:"POST",
+        headers:{ "Content-Type":"text/plain;charset=utf-8" },
+        body: JSON.stringify({ action:"resetAll", secret: API_SECRET })
+      });
+      const data = await res.json();
+      if(!data || !data.ok) throw new Error((data && data.error) || "Ralat tidak diketahui");
+      showToast("Semua data (tempatan + Google Sheet) telah direset.", "ok");
+    }catch(err){
+      console.error("resetAllData sheet error:", err);
+      showToast("Data tempatan direset, tetapi gagal memadam data di Google Sheet. Sila semak sambungan.", "danger");
+    }
+  } else {
+    showToast("Semua data tempatan telah direset.", "ok");
   }
+
+  sheetDataCache = null;
+  loadAdminData();
 }
 
 function populateAdminFilters(){
@@ -5382,7 +5451,7 @@ function renderAdminAcaraByKategori(){
       const isPadang = PADANG_EVENTS.includes(ev);
       return `<li>${escapeHtml(ev)} <span style="opacity:0.6;">(${isPadang?"Padang":"Balapan"})</span></li>`;
     }).join("");
-    const kumpulanList = getKumpulanBaseEvents(k, false).map(ev=>`<li>${escapeHtml(ev)}</li>`).join("");
+    const kumpulanList = conf.kumpulan.map(ev=>`<li>${escapeHtml(ev)}</li>`).join("");
     return `<div class="cat-card cat-${k}" style="cursor:default;">
       <div class="cc-label" style="font-size:12px;margin-top:0;margin-bottom:8px;">${escapeHtml(meta.label)}</div>
       <div style="font-size:11.5px;font-weight:800;text-transform:uppercase;opacity:0.7;margin-bottom:2px;">Individu</div>
@@ -5495,8 +5564,7 @@ function exportAdminCSV(){
         x.school.name, p.noPeserta, p.nama, p.noOku, p.umur,
         CATEGORY_META[p.kategori].label,
         p.jantina==="L"?"Lelaki":"Perempuan",
-        p.individu.join(" | "), p.kumpulan.join(" | "),
-        Object.keys(p.relayOrder||{}).map(ev=>ev+" = Pelari "+p.relayOrder[ev]).join(" | ")
+        p.individu.join(" | "), p.kumpulan.join(" | ")
       ]);
     });
   });
@@ -5504,7 +5572,7 @@ function exportAdminCSV(){
     showToast("Tiada data peserta untuk dimuat turun.", "warn");
     return;
   }
-  const headers = ["Sekolah","No Badan","Nama","No Kad OKU","Umur","Kategori","Jantina","Acara Individu","Acara Kumpulan","Susunan Pelari"];
+  const headers = ["Sekolah","No Peserta","Nama","No Kad OKU","Umur","Kategori","Jantina","Acara Individu","Acara Kumpulan"];
   const csvContent = [headers, ...rows]
     .map(r => r.map(cell => `"${String(cell).replace(/"/g,'""')}"`).join(","))
     .join("\r\n");
@@ -5537,7 +5605,6 @@ async function loadPublicStats(){
 
   if(isGasConfigured()){
     try{
-      await verifyDatabaseBinding();
       const res = await fetch(GAS_WEB_APP_URL + "?mode=summary&_t=" + Date.now(), { method:"GET", cache:"no-store" });
       const data = await res.json();
       if(data && data.ok){
@@ -5556,9 +5623,24 @@ async function loadPublicStats(){
       sourceLabel = "Tidak dapat memuatkan data terkini buat masa ini";
     }
   } else {
-    sourceLabel = "Google Sheet belum dikonfigurasi";
-    totalSchools = 0; totalPeserta = 0; totalL = 0; totalP = 0;
-    summary = {}; summaryByGender = {}; publicRosterCache = [];
+    // Mod tempatan: kira dari data yang ada pada pelayar/peranti ini sahaja
+    const schoolsWithData = new Set();
+    const roster = [];
+    SCHOOLS.forEach(s=>{
+      const data = loadSchoolData(normaliseSchool(s.name));
+      if(data.peserta.length > 0) schoolsWithData.add(s.name);
+      data.peserta.forEach(p=>{
+        summary[p.kategori] = (summary[p.kategori] || 0) + 1;
+        if(!summaryByGender[p.kategori]) summaryByGender[p.kategori] = { L:0, P:0 };
+        if(p.jantina === "L"){ summaryByGender[p.kategori].L++; totalL++; }
+        else if(p.jantina === "P"){ summaryByGender[p.kategori].P++; totalP++; }
+        roster.push({ nama:p.nama, sekolah:s.name, kategori:p.kategori, jantina:p.jantina, individu:(p.individu||[]).join(" | "), kumpulan:(p.kumpulan||[]).join(" | ") });
+      });
+    });
+    totalSchools = schoolsWithData.size;
+    totalPeserta = Object.values(summary).reduce((a,b)=>a+b,0);
+    sourceLabel = "Data pada peranti/pelayar ini sahaja";
+    publicRosterCache = roster;
   }
 
   sub.textContent = sourceLabel;
@@ -5591,7 +5673,6 @@ async function ensurePublicRoster(){
   if(publicRosterCache) return publicRosterCache;
   if(isGasConfigured()){
     try{
-      await verifyDatabaseBinding();
       const res = await fetch(GAS_WEB_APP_URL + "?mode=roster&_t=" + Date.now(), { method:"GET", cache:"no-store" });
       const data = await res.json();
       if(data && data.ok){
@@ -5619,16 +5700,13 @@ function filterRosterByEvent(roster, kategori, type, acara, jantina){
   } else {
     const seen = {};
     roster.forEach(r=>{
-      const openConf = getOpenKumpulanConfig(acara);
-      const categoryMatches = openConf ? openConf.categories.includes(r.kategori) : r.kategori === kategori;
-      if(!categoryMatches) return;
-      const list = (r.kumpulan || "").split(" | ").map(s=>normalizeLegacyGroupEventName(s.trim(), r.kategori)).filter(Boolean);
+      if(r.kategori !== kategori) return;
+      const list = (r.kumpulan || "").split(" | ").map(s=>s.trim()).filter(Boolean);
       list.forEach(evFull=>{
         if(evFull.indexOf(acara) === 0){
           const key = r.sekolah + "|" + evFull;
           if(!seen[key]){ seen[key] = { label:evFull, sekolah:r.sekolah, athletes:[] }; out.push(seen[key]); }
-          const relayMap = r.relayOrder && typeof r.relayOrder === "object" ? r.relayOrder : {};
-          seen[key].athletes.push({ nama: r.nama, noPeserta: r.noPeserta || "", order:Number(relayMap[evFull] || 0) });
+          seen[key].athletes.push({ nama: r.nama, noPeserta: "" });
         }
       });
     });
