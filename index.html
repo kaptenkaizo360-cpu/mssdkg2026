@@ -2334,7 +2334,7 @@ function formatLockoutRemaining(ms){
    2. Extensions > Apps Script > tampal kandungan fail Code.gs yang disertakan.
    3. Deploy > New deployment > Web app > Execute as: Me > Who has access: Anyone.
    4. Salin URL Web App yang dijana, gantikan nilai di bawah. */
-const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyFykHv2haS4zf3kGG2nw87xkfaugK5LYGHUSiK-OmqKRbcX2hJ4tT9yKgNAyxiYQ0s1A/exec";
+const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyz519EwRJH-Ir2iIssarr78nYqkKuBzkqqJA7qWwJ10Sd5kgi71uQFgPSg6DTC8Td31w/exec";
 
 /* Kunci rahsia API — MESTI SAMA PERSIS dengan API_SECRET dalam Code.gs.
    Ini disertakan pada setiap permintaan simpan/padam/reset supaya
@@ -2396,6 +2396,7 @@ function persistSchoolData(){
    SYNC KE GOOGLE SHEET (pangkalan data pusat)
    ========================================================= */
 let unsavedChanges = false;
+let lastSaveFailReason = "";
 
 function markUnsaved(){
   unsavedChanges = true;
@@ -2428,36 +2429,56 @@ async function saveToSheet(silent){
   const originalHtml = btn.innerHTML;
   btn.disabled = true;
   btn.innerHTML = "Menyimpan...";
-  let success = false;
-  try{
-    const res = await fetch(GAS_WEB_APP_URL, {
-      method:"POST",
-      headers:{ "Content-Type":"text/plain;charset=utf-8" },
-      body: JSON.stringify({
-        action:"saveSchool",
-        secret: API_SECRET,
-        school: currentSchoolLabel,
-        pengurus: schoolData.pengurus,
-        peserta: schoolData.peserta
-      })
-    });
-    const data = await res.json();
-    if(data && data.ok){
-      markSaved();
-      logAction("simpan", currentSchoolLabel, "Data disimpan ke pangkalan data pusat pada " + formatDateTime(new Date().toISOString()));
-      if(!silent) showToast("Data berjaya disimpan ke pangkalan data pusat.", "ok");
-      success = true;
-    } else {
-      throw new Error((data && data.error) || "Ralat tidak diketahui");
+
+  async function attemptSave(){
+    const controller = new AbortController();
+    const timer = setTimeout(()=>controller.abort(), 15000);
+    try{
+      const res = await fetch(GAS_WEB_APP_URL, {
+        method:"POST",
+        headers:{ "Content-Type":"text/plain;charset=utf-8" },
+        signal: controller.signal,
+        body: JSON.stringify({
+          action:"saveSchool",
+          secret: API_SECRET,
+          school: currentSchoolLabel,
+          pengurus: schoolData.pengurus,
+          peserta: schoolData.peserta
+        })
+      });
+      clearTimeout(timer);
+      const data = await res.json();
+      if(data && data.ok) return { ok:true };
+      return { ok:false, reason:(data && data.error) || ("Respons tidak sah (status " + res.status + ")") };
+    }catch(err){
+      clearTimeout(timer);
+      const reason = err.name === "AbortError" ? "Tamat masa (>15 saat) — Apps Script mungkin perlahan/tidak bertindak balas" : (err.message || String(err));
+      return { ok:false, reason };
     }
-  }catch(err){
-    if(!silent) showToast("Gagal menyimpan ke pangkalan data pusat. Data masih selamat pada peranti ini.", "danger");
-    console.error("saveToSheet error:", err);
-    success = false;
-  }finally{
-    btn.disabled = false;
-    btn.innerHTML = originalHtml;
   }
+
+  let result = await attemptSave();
+  if(!result.ok){
+    // satu percubaan semula automatik selepas rehat sekejap — kerap kali
+    // kegagalan pertama cuma gangguan sekejap rangkaian/Apps Script sejuk.
+    await new Promise(r=>setTimeout(r, 1200));
+    result = await attemptSave();
+  }
+
+  let success = false;
+  if(result.ok){
+    markSaved();
+    logAction("simpan", currentSchoolLabel, "Data disimpan ke pangkalan data pusat pada " + formatDateTime(new Date().toISOString()));
+    if(!silent) showToast("Data berjaya disimpan ke pangkalan data pusat.", "ok");
+    success = true;
+  } else {
+    if(!silent) showToast("Gagal menyimpan ke pangkalan data pusat: " + result.reason + ". Data masih selamat pada peranti ini.", "danger");
+    console.error("saveToSheet error:", result.reason);
+    success = false;
+    lastSaveFailReason = result.reason;
+  }
+  btn.disabled = false;
+  btn.innerHTML = originalHtml;
   return success;
 }
 
@@ -3434,7 +3455,7 @@ function repairDuplicateIds(){
 async function mergeAndSaveToSheet(record, isDelete){
   if(isGasConfigured() && schoolData.pengurus.nama && schoolData.pengurus.tel){
     try{
-      const fresh = await fetchSchoolFromSheet(currentSchoolLabel, 8000);
+      const fresh = await fetchSchoolFromSheet(currentSchoolLabel, 5000);
       if(fresh){
         let merged = fresh.peserta.slice();
         if(isDelete){
@@ -3554,7 +3575,7 @@ async function savePeserta(){
     syncOk = await mergeAndSaveToSheet(record, false);
     if(!syncOk){
       markUnsaved();
-      syncMessage = "⚠️ Disimpan pada peranti ini, tetapi GAGAL disegerak ke Google Sheet. Sila tekan butang Simpan di header sebelum log keluar.";
+      syncMessage = "⚠️ Disimpan pada peranti ini, tetapi GAGAL disegerak ke Google Sheet (" + (lastSaveFailReason || "sebab tidak diketahui") + "). Sila tekan butang Simpan di header sebelum log keluar.";
     } else {
       syncMessage = "✅ Berjaya disegerak ke pangkalan data pusat (Google Sheet).";
     }
