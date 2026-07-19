@@ -2198,6 +2198,34 @@ const CATEGORY_META = {
 };
 
 const OPEN_KUMPULAN_EVENT = "4 X 100M Mix Terbuka Sekolah Rendah";
+
+/* PENYERASIAN NAMA LAMA: acara berkumpulan pernah ditukar nama (cth. "4X100M
+   (Mix 2L2P)" -> "4 X 100M Mix Bawah 10 Tahun"). Peserta yang telah didaftarkan
+   SEBELUM penukaran ini masih menyimpan nama LAMA dalam rekod mereka. Supaya
+   pendaftaran lama itu tetap dikesan/dipaparkan (bukan hilang terus), kita
+   semak juga senarai nama lama yang sepadan bagi setiap kategori.
+   */
+const LEGACY_KUM_NAMES = {
+  B8:    ["4X50M (Mix 2L2P)"],
+  B10:   ["4X50M (Mix 2L2P)", "4X100M (Mix 2L2P)"],
+  B12:   ["4X100M (Mix 2L2P)"],
+  B15:   ["4X100M (Mix 2L2P)"],
+  B19:   ["4X100M (Mix 2L2P)"],
+  SD_SR: ["2X50M"],
+  SD_SM: ["2X50M"],
+  PRA:   ["2X50M"]
+};
+const LEGACY_OPEN_KUMPULAN_EVENT = "4X100M (Mix Terbuka 2L2P)";
+
+/* Semak jika acara BERKUMPULAN yang tersimpan (evFull, cth. "...— Pasukan A")
+   sepadan dengan acara semasa (baseName) BAGI kategori ini — termasuk nama
+   lama sebelum penukaran, supaya pendaftaran sedia ada tidak "hilang". */
+function kumEventMatches(evFull, baseName, kategori){
+  if(evFull.indexOf(baseName) === 0) return true;
+  if(baseName === OPEN_KUMPULAN_EVENT && evFull.indexOf(LEGACY_OPEN_KUMPULAN_EVENT) === 0) return true;
+  const legacyNames = LEGACY_KUM_NAMES[kategori] || [];
+  return legacyNames.some(legacy => evFull.indexOf(legacy) === 0);
+}
 const OPEN_KUMPULAN_CATEGORIES = ["B8","B10","B12","B15","B19"];
 
 const EVENTS_BY_CATEGORY = {
@@ -2329,7 +2357,7 @@ function formatLockoutRemaining(ms){
    2. Extensions > Apps Script > tampal kandungan fail Code.gs yang disertakan.
    3. Deploy > New deployment > Web app > Execute as: Me > Who has access: Anyone.
    4. Salin URL Web App yang dijana, gantikan nilai di bawah. */
-const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzfLKvgGlm7dxi-b4KhdFd0sHHJCvSM1CUBf0_jkZBHPF9IsP3pTDGJ4rWNmiS800HGxQ/exec";
+const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyz3ncrtm2dbKHYKYEXB4SGUDklxSUK6i5OYz7yDJj-AIjiHNFUGrmNQzMUdj1u0pz4FA/exec";
 
 /* Kunci rahsia API — MESTI SAMA PERSIS dengan API_SECRET dalam Code.gs.
    Ini disertakan pada setiap permintaan simpan/padam/reset supaya
@@ -4061,7 +4089,7 @@ function getResultEntries(kategori, type, baseName, jantina){
       x.data.peserta.forEach(p=>{
         if(p.kategori !== kategori) return;
         p.kumpulan.forEach(evFull=>{
-          if(evFull.indexOf(baseName) === 0){
+          if(kumEventMatches(evFull, baseName, kategori)){
             const key = x.school.name + "|" + evFull;
             if(!seen[key]){
               seen[key] = { entryKey: key, label: evFull, sekolah: x.school.name, athletes: [] };
@@ -5703,7 +5731,7 @@ function filterRosterByEvent(roster, kategori, type, acara, jantina){
       if(r.kategori !== kategori) return;
       const list = (r.kumpulan || "").split(" | ").map(s=>s.trim()).filter(Boolean);
       list.forEach(evFull=>{
-        if(evFull.indexOf(acara) === 0){
+        if(kumEventMatches(evFull, acara, kategori)){
           const key = r.sekolah + "|" + evFull;
           if(!seen[key]){ seen[key] = { label:evFull, sekolah:r.sekolah, athletes:[] }; out.push(seen[key]); }
           seen[key].athletes.push({ nama: r.nama, noPeserta: "" });
