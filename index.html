@@ -2197,28 +2197,85 @@ const CATEGORY_META = {
   PRA:  { label:"Pra PPKI Terbuka", sub:"Terbuka", peringkat:"SK", group:"khas" }
 };
 
-const OPEN_KUMPULAN_EVENT = "4X100M (Mix Terbuka 2L2P)";
-const OPEN_KUMPULAN_CATEGORIES = ["B8","B10","B12","B15","B19"];
+/* Acara "Terbuka" kini dipecah 2 — Sekolah Rendah (B8/B10/B12) dan Sekolah
+   Menengah (B15/B19) — mengikut permintaan terkini. */
+const OPEN_KUMPULAN_RENDAH_EVENT = "4x100M mix Terbuka Sekolah Rendah";
+const OPEN_KUMPULAN_RENDAH_CATEGORIES = ["B8","B10","B12"];
+const OPEN_KUMPULAN_MENENGAH_EVENT = "4x100M mix Terbuka Sekolah Menengah";
+const OPEN_KUMPULAN_MENENGAH_CATEGORIES = ["B15","B19"];
 
-/* Acara 4X50M (Mix 2L2P) dimiliki kategori Bawah 10, tetapi turut terbuka
-   kepada peserta Bawah 8 (satu perlumbaan sama, dua kategori umur boleh masuk). */
-const SHARED_4X50_EVENT = "4X50M (Mix 2L2P)";
+/* Acara 4x50M mix Bawah 10 Tahun dimiliki kategori Bawah 10, tetapi turut
+   terbuka kepada peserta Bawah 8 (satu perlumbaan sama, dua kategori umur
+   boleh masuk). */
+const SHARED_4X50_EVENT = "4x50M mix Bawah 10 Tahun";
 const SHARED_4X50_CATEGORIES = ["B8","B10"];
 
 const EVENTS_BY_CATEGORY = {
-  B8:   { individu:["50M","80M"], kumpulan:[] },
-  B10:  { individu:["100M","L/Jauh"], kumpulan:["4X100M (Mix 2L2P)"] },
-  B12:  { individu:["100M","200M","L/Jauh","L/Peluru"], kumpulan:["4X100M (Mix 2L2P)"] },
-  B15:  { individu:["100M","200M","L/Jauh","R/Lembing","L/Peluru","L/Cakera"], kumpulan:["4X100M (Mix 2L2P)"] },
-  B19:  { individu:["100M","200M","L/Jauh","R/Lembing","L/Peluru","L/Cakera"], kumpulan:["4X100M (Mix 2L2P)"] },
-  SD_SR:{ individu:["50M"], kumpulan:["2X50M"] },
-  SD_SM:{ individu:["80M","L/Peluru"], kumpulan:["2X50M"] },
-  PRA:  { individu:["50M","80M"], kumpulan:["2X50M"] }
+  B8:   { individu:["50M","80M"], kumpulan:["4x50M mix Bawah 8 Tahun"] },
+  B10:  { individu:["100M","L/Jauh"], kumpulan:["4x100M mix Bawah 10 Tahun"] },
+  B12:  { individu:["100M","200M","L/Jauh","L/Peluru"], kumpulan:["4x100M mix Bawah 12 Tahun"] },
+  B15:  { individu:["100M","200M","L/Jauh","R/Lembing","L/Peluru","L/Cakera"], kumpulan:["4x100M mix Bawah 15 Tahun"] },
+  B19:  { individu:["100M","200M","L/Jauh","R/Lembing","L/Peluru","L/Cakera"], kumpulan:["4x100M mix Bawah 19 Tahun"] },
+  SD_SR:{ individu:["50M"], kumpulan:["2x50M Terbuka Sindrom Down Terbuka Sekolah Rendah"] },
+  SD_SM:{ individu:["80M","L/Peluru"], kumpulan:["2x50M Terbuka Sindrom Down Terbuka Sekolah Menengah"] },
+  PRA:  { individu:["50M","80M"], kumpulan:["2x50M Terbuka Pra PPKI"] }
 };
+
+/* Had umur (tahun) untuk SETIAP acara berkumpulan — disahkan semasa
+   pendaftaran supaya peserta luar julat umur tidak boleh didaftarkan
+   ke acara berkenaan. [minUmur, maxUmur] */
+const KUMPULAN_AGE_RANGE = {
+  "4x100M mix Bawah 12 Tahun": [10, 12],
+  "4x100M mix Bawah 15 Tahun": [13, 15],
+  "4x100M mix Bawah 19 Tahun": [16, 19],
+  "4x100M mix Bawah 10 Tahun": [7, 10],
+  "4x50M mix Bawah 10 Tahun": [7, 10],
+  "4x50M mix Bawah 8 Tahun": [7, 8],
+  "2x50M Terbuka Sindrom Down Terbuka Sekolah Rendah": [7, 12],
+  "2x50M Terbuka Sindrom Down Terbuka Sekolah Menengah": [13, 19],
+  "2x50M Terbuka Pra PPKI": [5, 6],
+  "4x100M mix Terbuka Sekolah Rendah": [7, 12],
+  "4x100M mix Terbuka Sekolah Menengah": [13, 19]
+};
+
+/* PENYERASIAN NAMA LAMA: pendaftaran yang dibuat SEBELUM nama acara
+   berkumpulan ditukar (versi asal: "4X100M (Mix 2L2P)", "2X50M",
+   "4X100M (Mix Terbuka 2L2P)", "4X50M (Mix 2L2P)") masih perlu dikesan
+   supaya tidak "hilang" daripada Start List/dashboard. */
+const LEGACY_KUM_NAMES = {
+  B8:    ["4X50M (Mix 2L2P)"],
+  B10:   ["4X50M (Mix 2L2P)", "4X100M (Mix 2L2P)"],
+  B12:   ["4X100M (Mix 2L2P)"],
+  B15:   ["4X100M (Mix 2L2P)"],
+  B19:   ["4X100M (Mix 2L2P)"],
+  SD_SR: ["2X50M"],
+  SD_SM: ["2X50M"],
+  PRA:   ["2X50M"]
+};
+const LEGACY_OPEN_KUMPULAN_EVENT = "4X100M (Mix Terbuka 2L2P)";
+
+/* Semak jika acara BERKUMPULAN yang tersimpan (evFull, cth. "...— Pasukan A")
+   sepadan dengan acara semasa (baseName) BAGI kategori ini — termasuk semua
+   nama lama sebelum penukaran, supaya pendaftaran sedia ada tidak "hilang". */
+function kumEventMatches(evFull, baseName, kategori){
+  if(evFull.indexOf(baseName) === 0) return true;
+  if((baseName === OPEN_KUMPULAN_RENDAH_EVENT || baseName === OPEN_KUMPULAN_MENENGAH_EVENT) &&
+     evFull.indexOf(LEGACY_OPEN_KUMPULAN_EVENT) === 0) return true;
+  const legacyNames = LEGACY_KUM_NAMES[kategori] || [];
+  return legacyNames.some(legacy => evFull.indexOf(legacy) === 0);
+}
 
 const PADANG_EVENTS = ["L/Jauh","L/Peluru","L/Cakera","R/Lembing"];
 const MAX_INDIVIDU = 2;
 const MAX_KUMPULAN = 3;
+
+/* Kembalikan nama acara "Terbuka" yang betul bagi kategori ini (Sekolah
+   Rendah atau Sekolah Menengah), atau null jika kategori tiada acara terbuka. */
+function getOpenKumpulanEventFor(kategori){
+  if(OPEN_KUMPULAN_RENDAH_CATEGORIES.includes(kategori)) return OPEN_KUMPULAN_RENDAH_EVENT;
+  if(OPEN_KUMPULAN_MENENGAH_CATEGORIES.includes(kategori)) return OPEN_KUMPULAN_MENENGAH_EVENT;
+  return null;
+}
 
 /* Senarai 40 sekolah PPKI Daerah Kluang.
    Kata laluan setiap sekolah kini ialah NOMBOR TELEFON PENGURUS PASUKAN
@@ -2334,7 +2391,7 @@ function formatLockoutRemaining(ms){
    2. Extensions > Apps Script > tampal kandungan fail Code.gs yang disertakan.
    3. Deploy > New deployment > Web app > Execute as: Me > Who has access: Anyone.
    4. Salin URL Web App yang dijana, gantikan nilai di bawah. */
-const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwGkXVyyHFxoMU0e52FOkhqhVB61pf9sYV5DM8iyFHxegkHY5kVH3kPzzg4HZBSeE3fkw/exec";
+const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxvgTNfjY09gtPv9HWed3RPbCSBBpBTZ3ljJ8PFPj-mzUviBY439JKY_s-wXwJDrPPxfg/exec";
 
 /* Kunci rahsia API — MESTI SAMA PERSIS dengan API_SECRET dalam Code.gs.
    Ini disertakan pada setiap permintaan simpan/padam/reset supaya
@@ -3257,11 +3314,14 @@ function renderEventCheckboxes(){
 
   const kumpulanList = evConf.kumpulan.slice();
   if(SHARED_4X50_CATEGORIES.includes(kategori)) kumpulanList.unshift(SHARED_4X50_EVENT);
-  if(OPEN_KUMPULAN_CATEGORIES.includes(kategori)) kumpulanList.push(OPEN_KUMPULAN_EVENT);
+  const openEvent1 = getOpenKumpulanEventFor(kategori);
+  if(openEvent1) kumpulanList.push(openEvent1);
 
   kumpulanList.forEach(baseName=>{
-    const isOpen = baseName === OPEN_KUMPULAN_EVENT;
+    const isOpen = (baseName === OPEN_KUMPULAN_RENDAH_EVENT || baseName === OPEN_KUMPULAN_MENENGAH_EVENT);
     const isShared4x50 = baseName === SHARED_4X50_EVENT;
+    const ageRange = KUMPULAN_AGE_RANGE[baseName];
+    const ageHint = ageRange ? `<span class="ehint">Umur ${ageRange[0]}\u2013${ageRange[1]} tahun sahaja</span>` : "";
     ["A","B","C","D"].forEach(team=>{
       const evName = baseName + " — Pasukan " + team;
       const label = document.createElement("label");
@@ -3270,7 +3330,7 @@ function renderEventCheckboxes(){
       if(checked) label.classList.add("checked");
       label.innerHTML = `
         <input type="checkbox" data-type="kumpulan" value="${evName}" ${checked?"checked":""} onchange="onEventCheckChange(this)">
-        <span class="ename">${evName}${(isOpen && team==="A") ? '<span class="ehint">Terbuka — semua kategori umur boleh menyertai</span>' : ""}${(isShared4x50 && team==="A") ? '<span class="ehint">Dikongsi — kategori Bawah 8 dan Bawah 10 boleh menyertai</span>' : ""}${team!=="A" ? '<span class="ehint">Guna Pasukan '+team+' jika sekolah menghantar lebih daripada '+(team==="B"?"1":team==="C"?"2":"3")+' pasukan untuk acara ini</span>' : ""}</span>
+        <span class="ename">${evName}${team==="A" ? ageHint : ""}${(isOpen && team==="A") ? '<span class="ehint">Terbuka — semua sekolah kategori berkaitan boleh menyertai</span>' : ""}${(isShared4x50 && team==="A") ? '<span class="ehint">Dikongsi — kategori Bawah 8 dan Bawah 10 boleh menyertai</span>' : ""}${team!=="A" ? '<span class="ehint">Guna Pasukan '+team+' jika sekolah menghantar lebih daripada '+(team==="B"?"1":team==="C"?"2":"3")+' pasukan untuk acara ini</span>' : ""}</span>
       `;
       kumpulanWrap.appendChild(label);
     });
@@ -3527,6 +3587,17 @@ async function savePeserta(){
     const count = padangCountForSchool(evName, id);
     if(count >= quota){
       formErr.textContent = "Kuota acara '" + evName + "' untuk sekolah anda telah penuh (" + quota + "/" + quota + ").";
+      formErr.classList.add("show");
+      return;
+    }
+  }
+
+  // sahkan had umur bagi setiap acara BERKUMPULAN yang dipilih
+  for(const evName of kumpulan){
+    const baseName = evName.replace(/ — Pasukan [A-D]$/, "");
+    const range = KUMPULAN_AGE_RANGE[baseName];
+    if(range && (umur < range[0] || umur > range[1])){
+      formErr.textContent = "Acara '" + baseName + "' hanya untuk umur " + range[0] + " hingga " + range[1] + " tahun sahaja (umur peserta ini: " + umur + " tahun).";
       formErr.classList.add("show");
       return;
     }
@@ -4057,7 +4128,8 @@ function onResultsKategoriChange(){
 
   const kumBaseNames = evConf.kumpulan.slice();
   if(SHARED_4X50_CATEGORIES.includes(kategori)) kumBaseNames.unshift(SHARED_4X50_EVENT);
-  if(OPEN_KUMPULAN_CATEGORIES.includes(kategori)) kumBaseNames.push(OPEN_KUMPULAN_EVENT);
+  const openEvent2 = getOpenKumpulanEventFor(kategori);
+  if(openEvent2) kumBaseNames.push(openEvent2);
   if(kumBaseNames.length){
     const kumGroup = document.createElement("optgroup");
     kumGroup.label = "Acara Berkumpulan (Berpasukan)";
@@ -4090,7 +4162,7 @@ function getResultEntries(kategori, type, baseName, jantina){
       x.data.peserta.forEach(p=>{
         if(p.kategori !== kategori) return;
         p.kumpulan.forEach(evFull=>{
-          if(evFull.indexOf(baseName) === 0){
+          if(kumEventMatches(evFull, baseName, kategori)){
             const key = x.school.name + "|" + evFull;
             if(!seen[key]){
               seen[key] = { entryKey: key, label: evFull, sekolah: x.school.name, athletes: [] };
@@ -4281,7 +4353,8 @@ function renderKumpulanDashboard(){
     const meta = CATEGORY_META[kat];
     let kumList = conf.kumpulan.slice();
     if(SHARED_4X50_CATEGORIES.includes(kat) && !kumList.includes(SHARED_4X50_EVENT)) kumList.unshift(SHARED_4X50_EVENT);
-    if(OPEN_KUMPULAN_CATEGORIES.includes(kat)) kumList.push(OPEN_KUMPULAN_EVENT);
+    const openEventForKat = getOpenKumpulanEventFor(kat);
+    if(openEventForKat) kumList.push(openEventForKat);
     kumList.forEach(ev=>{
       let entries = getResultEntries(kat, "KUM", ev, "");
       if(schoolFilter) entries = entries.filter(en=>en.sekolah === schoolFilter);
@@ -4982,7 +5055,8 @@ function buildEventScheduleItems(){
 
     let kumList = conf.kumpulan.slice();
     if(SHARED_4X50_CATEGORIES.includes(kat) && !kumList.includes(SHARED_4X50_EVENT)) kumList.unshift(SHARED_4X50_EVENT);
-    if(OPEN_KUMPULAN_CATEGORIES.includes(kat)) kumList.push(OPEN_KUMPULAN_EVENT);
+    const openEventForKat = getOpenKumpulanEventFor(kat);
+    if(openEventForKat) kumList.push(openEventForKat);
     kumList.forEach(ev=>{
       trekItems.push({ kategori:kat, katLabel:meta.label + " (Berpasukan)", acara:ev, jantina:"", type:"KUM" });
     });
@@ -5734,7 +5808,7 @@ function filterRosterByEvent(roster, kategori, type, acara, jantina){
       if(r.kategori !== kategori) return;
       const list = (r.kumpulan || "").split(" | ").map(s=>s.trim()).filter(Boolean);
       list.forEach(evFull=>{
-        if(evFull.indexOf(acara) === 0){
+        if(kumEventMatches(evFull, acara, kategori)){
           const key = r.sekolah + "|" + evFull;
           if(!seen[key]){ seen[key] = { label:evFull, sekolah:r.sekolah, athletes:[] }; out.push(seen[key]); }
           seen[key].athletes.push({ nama: r.nama, noPeserta: "" });
