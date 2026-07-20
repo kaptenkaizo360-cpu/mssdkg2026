@@ -1437,7 +1437,7 @@ body.printing-form #printFormArea{display:block !important;padding:24px;}
       <div class="panel-head"><h2 style="color:var(--johor-blue);">Start List &mdash; Acara Individu</h2></div>
       <div class="panel-body">
         <div class="field-note no-print" style="margin-bottom:12px;">
-          Senarai penuh semua acara individu yang ada peserta berdaftar, Bawah 8 Tahun sehingga Pra PPKI Terbuka. Jadual automatik ikut Acara Akhir (saringan) jika acara berkenaan sudah melebihi 8 peserta.
+          Senarai penuh semua acara individu yang ada peserta berdaftar, Bawah 8 Tahun sehingga Pra PPKI Terbuka. Jadual automatik ikut Acara Akhir (saringan) jika acara berkenaan sudah melebihi 8 peserta. <b>Halaman ini terus tarik data terkini setiap kali dibuka</b>, dan auto-kemas kini bila mana-mana guru/pendaftar tekan Simpan/Log Keluar (dalam tab/peranti yang sama).
         </div>
         <div class="no-print" style="margin-bottom:14px;">
           <label for="individuDashboardSchoolFilter">Tapis ikut Sekolah (untuk cetak satu sekolah sahaja)</label>
@@ -1482,7 +1482,7 @@ body.printing-form #printFormArea{display:block !important;padding:24px;}
       <div class="panel-head"><h2 style="color:var(--johor-blue);">Start List &mdash; Acara Berkumpulan</h2></div>
       <div class="panel-body">
         <div class="field-note no-print" style="margin-bottom:12px;">
-          Senarai penuh semua acara berpasukan/relay merentas semua kategori, beserta nama setiap atlet dalam pasukan. Jadual automatik ikut Acara Akhir (saringan) jika acara berkenaan sudah melebihi 8 pasukan.
+          Senarai penuh semua acara berpasukan/relay merentas semua kategori, beserta nama setiap atlet dalam pasukan. Jadual automatik ikut Acara Akhir (saringan) jika acara berkenaan sudah melebihi 8 pasukan. <b>Halaman ini terus tarik data terkini setiap kali dibuka</b>, dan auto-kemas kini bila mana-mana guru/pendaftar tekan Simpan/Log Keluar (dalam tab/peranti yang sama).
         </div>
         <div class="no-print" style="margin-bottom:14px;">
           <label for="kumpulanDashboardSchoolFilter">Tapis ikut Sekolah (untuk cetak satu sekolah sahaja)</label>
@@ -2393,7 +2393,7 @@ function formatLockoutRemaining(ms){
    2. Extensions > Apps Script > tampal kandungan fail Code.gs yang disertakan.
    3. Deploy > New deployment > Web app > Execute as: Me > Who has access: Anyone.
    4. Salin URL Web App yang dijana, gantikan nilai di bawah. */
-const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyXEuJ1GqMgh6AyJz89uj1owgiFq310_dM79uVijV97QFL1H-7GHvtibcKEq66PafvUsA/exec";
+const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwHCr96rJwra1ioL0fpEPU3D6r1m-2NDgwoKxFYLrPpzk3nhqqBIpcCS6MUA5X1yaPITQ/exec";
 
 /* Kunci rahsia API — MESTI SAMA PERSIS dengan API_SECRET dalam Code.gs.
    Ini disertakan pada setiap permintaan simpan/padam/reset supaya
@@ -2530,6 +2530,7 @@ async function saveToSheet(silent){
     logAction("simpan", currentSchoolLabel, "Data disimpan ke pangkalan data pusat pada " + formatDateTime(new Date().toISOString()));
     if(!silent) showToast("Data berjaya disimpan ke pangkalan data pusat.", "ok");
     success = true;
+    broadcastSaveSignal();
   } else {
     if(!silent) showToast("Gagal menyimpan ke pangkalan data pusat: " + result.reason + ". Data masih selamat pada peranti ini.", "danger");
     console.error("saveToSheet error:", result.reason);
@@ -4300,7 +4301,9 @@ function renderIndividuDashboard(){
           if(colliding.length){
             html += `<div class="error-text show" style="margin:4px 0;">\u26A0\uFE0F Sekolah tak dapat diagihkan sepenuhnya (terlalu sedikit sekolah/saringan): ${colliding.map(s=>escapeHtml(s)+" ("+schoolCounts[s]+")").join(", ")}. Guna modul Keputusan &amp; "Pindah ke" untuk susun manual jika perlu.</div>`;
           }
-          html += `<table class="startlist-table"><thead><tr><th style="width:50px;">No.</th><th style="width:90px;">No. Peserta</th><th>Nama</th><th>Sekolah</th><th style="width:110px;">Masa/Keputusan</th></tr></thead><tbody>` +
+          const isPadangEv = PADANG_EVENTS.includes(ev);
+          const laneColLabel = isPadangEv ? "No." : "No. Lorong";
+          html += `<table class="startlist-table"><thead><tr><th style="width:70px;">${laneColLabel}</th><th style="width:90px;">No. Peserta</th><th>Nama</th><th>Sekolah</th><th style="width:110px;">Masa/Keputusan</th></tr></thead><tbody>` +
             group.map((en,i)=>`<tr><td>${i+1}</td><td class="mono">${escapeHtml(en.noPeserta || "-")}</td><td><b>${escapeHtml(en.label)}</b></td><td>${escapeHtml(en.sekolah)}</td><td></td></tr>`).join("") +
             `</tbody></table>`;
         });
@@ -4383,7 +4386,7 @@ function renderKumpulanDashboard(){
         if(groups.length > 1){
           html += `<div class="startlist-heat-title">Acara Akhir ${gi+1}</div>`;
         }
-        html += `<table class="startlist-table"><thead><tr><th style="width:50px;">No.</th><th>Pasukan</th><th>Sekolah</th><th>Ahli Pasukan (Giliran Larian)</th></tr></thead><tbody>` +
+        html += `<table class="startlist-table"><thead><tr><th style="width:70px;">No. Lorong</th><th>Pasukan</th><th>Sekolah</th><th>Ahli Pasukan (Giliran Larian)</th></tr></thead><tbody>` +
           group.map((en,i)=>{
             const original = entries.find(e=>e.entryKey === en.entryKey) || en;
             const athletes = (original.athletes||[]).map((a,ai)=>{
@@ -4546,12 +4549,14 @@ function printFullStartList(){
       if(entries.length === 0) return;
       html += `<div style="margin-top:14px;page-break-inside:avoid;">
         <div style="font-family:'Oswald',sans-serif;font-weight:700;font-size:13px;text-transform:uppercase;">${row.time} &mdash; ${escapeHtml(row.acara)} &mdash; ${escapeHtml(row.katLabel)}</div>`;
+      const isPadangEvent = row.type === "IND" && PADANG_EVENTS.includes(row.acara);
+      const noColLabel = isPadangEvent ? "No." : "No. Lorong";
       if(row.type === "IND"){
-        html += `<table class="print-form-table"><thead><tr><th>No.</th><th>No. Peserta</th><th>Nama</th><th>Sekolah</th></tr></thead><tbody>` +
+        html += `<table class="print-form-table"><thead><tr><th>${noColLabel}</th><th>No. Peserta</th><th>Nama</th><th>Sekolah</th></tr></thead><tbody>` +
           entries.map((en,i)=>`<tr><td>${i+1}</td><td>${escapeHtml(en.noPeserta||"-")}</td><td>${escapeHtml(en.label)}</td><td>${escapeHtml(en.sekolah)}</td></tr>`).join("") +
           `</tbody></table>`;
       } else {
-        html += `<table class="print-form-table"><thead><tr><th>No.</th><th>Pasukan</th><th>Sekolah</th><th>No. Badan Ahli Pasukan</th></tr></thead><tbody>` +
+        html += `<table class="print-form-table"><thead><tr><th>No. Lorong</th><th>Pasukan</th><th>Sekolah</th><th>No. Badan Ahli Pasukan</th></tr></thead><tbody>` +
           entries.map((en,i)=>{
             const bibNumbers = (en.athletes||[]).map(a=>escapeHtml(a.noPeserta||"-")).join(", ");
             return `<tr><td>${i+1}</td><td>${escapeHtml(en.label)}</td><td>${escapeHtml(en.sekolah)}</td><td>${bibNumbers}</td></tr>`;
@@ -4610,8 +4615,8 @@ function generateCardForm(type){
 }
 
 const PRINT_FORM_META = {
-  penamat: { title:"BORANG HAKIM PENAMAT", cols:["No. Lorong/Bib","Nama","Sekolah","Kedudukan","Catatan Masa"] },
-  masa:    { title:"BORANG PENJAGA MASA", cols:["No. Lorong/Bib","Nama","Sekolah","Masa (saat)"] },
+  penamat: { title:"BORANG HAKIM PENAMAT", cols:["No. Lorong","No. Peserta","Nama","Sekolah","Kedudukan","Catatan Masa"] },
+  masa:    { title:"BORANG PENJAGA MASA", cols:["No. Lorong","No. Peserta","Nama","Sekolah","Masa (saat)"] },
   lorong:  { title:"BORANG HAKIM LORONG", cols:["No. Lorong","Nama","Sekolah","Catatan"] },
   peluru:  { title:"BORANG LONTAR PELURU", cols:["Nama","Sekolah","Percubaan 1","Percubaan 2","Percubaan 3","Jarak Terbaik (m)"] },
   lembing: { title:"BORANG LONTAR LEMBING", cols:["Nama","Sekolah","Percubaan 1","Percubaan 2","Percubaan 3","Jarak Terbaik (m)"] },
@@ -4648,7 +4653,9 @@ function generatePrintForm(type){
       const cells = meta.cols.map(col=>{
         if(col === "Nama") return escapeHtml(en.label);
         if(col === "Sekolah") return escapeHtml(en.sekolah);
-        if(col === "No. Lorong/Bib" || col === "No. Lorong" || col === "No." || col === "No. Peserta") return escapeHtml(en.noPeserta || String(idx+1));
+        if(col === "No. Lorong") return String(idx+1);
+        if(col === "No. Peserta") return escapeHtml(en.noPeserta || "-");
+        if(col === "No.") return escapeHtml(en.noPeserta || String(idx+1));
         return "";
       });
       return `<tr>${cells.map(c=>`<td>${c}</td>`).join("")}</tr>`;
@@ -5216,6 +5223,39 @@ function openStandingsPage(){
 let dashboardReturnPage = null;
 
 
+/* =========================================================
+   REFRESH DASHBOARD — DICETUSKAN OLEH TINDAKAN (bukan berjadual/setiap
+   masa). Dashboard Start List sentiasa tarik data TERKINI setiap kali
+   dibuka, dan turut auto-kemas kini bila mana-mana guru/pendaftar tekan
+   Simpan / Simpan & Log Keluar / Log Keluar (isyarat merentas tab guna
+   localStorage, berguna bila Admin buka dalam tab/peranti berlainan
+   tapi kekal terbuka semasa guru mendaftar).
+   ========================================================= */
+const SAVE_SIGNAL_KEY = "kejohanan2026_save_signal";
+
+function broadcastSaveSignal(){
+  try{ localStorage.setItem(SAVE_SIGNAL_KEY, String(Date.now())); }catch(e){}
+}
+
+let activeDashboardRenderFn = null;
+
+window.addEventListener("storage", (e)=>{
+  if(e.key === SAVE_SIGNAL_KEY && activeDashboardRenderFn){
+    refreshActiveDashboard();
+  }
+});
+
+async function refreshActiveDashboard(){
+  if(!activeDashboardRenderFn) return;
+  if(isGasConfigured()){
+    try{
+      const fetched = await fetchAllFromSheet(8000);
+      if(fetched) sheetDataCache = fetched;
+    }catch(err){ console.error("refreshActiveDashboard error:", err); }
+  }
+  activeDashboardRenderFn();
+}
+
 function openIndividuDashboardPage(){
   ["app","adminApp","statistikApp"].forEach(id=>{
     const el = document.getElementById(id);
@@ -5224,10 +5264,12 @@ function openIndividuDashboardPage(){
   document.querySelectorAll("#app, #adminApp, #statistikApp").forEach(el=>{ el.style.display = "none"; });
   document.getElementById("individuDashboardPage").style.display = "block";
   window.scrollTo({top:0, behavior:"instant"});
-  renderIndividuDashboard();
+  activeDashboardRenderFn = renderIndividuDashboard;
+  refreshActiveDashboard();
 }
 
 function closeIndividuDashboardPage(){
+  activeDashboardRenderFn = null;
   document.getElementById("individuDashboardPage").style.display = "none";
   const back = dashboardReturnPage || "adminApp";
   const el = document.getElementById(back);
@@ -5243,10 +5285,12 @@ function openKumpulanDashboardPage(){
   document.querySelectorAll("#app, #adminApp, #statistikApp").forEach(el=>{ el.style.display = "none"; });
   document.getElementById("kumpulanDashboardPage").style.display = "block";
   window.scrollTo({top:0, behavior:"instant"});
-  renderKumpulanDashboard();
+  activeDashboardRenderFn = renderKumpulanDashboard;
+  refreshActiveDashboard();
 }
 
 function closeKumpulanDashboardPage(){
+  activeDashboardRenderFn = null;
   document.getElementById("kumpulanDashboardPage").style.display = "none";
   const back = dashboardReturnPage || "adminApp";
   const el = document.getElementById(back);
