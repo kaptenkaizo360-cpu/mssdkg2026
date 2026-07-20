@@ -1059,6 +1059,7 @@ footer.app-footer{
 }
 
 @media print{
+  .print-only{display:inline !important;}
   html{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
   body{background:#fff; filter:grayscale(100%);}
   .no-print{display:none !important;}
@@ -1101,6 +1102,7 @@ body.printing-form #printFormArea{display:block !important;padding:24px;}
 .kopk-card-sign{font-size:12px;margin-top:10px;}
 .kopk-card-role{font-size:11px;font-style:italic;margin-top:2px;}
 
+.print-only{display:none;}
 .startlist-block{margin-bottom:22px;}
 .startlist-head{
   font-family:'Oswald',sans-serif;
@@ -2391,7 +2393,7 @@ function formatLockoutRemaining(ms){
    2. Extensions > Apps Script > tampal kandungan fail Code.gs yang disertakan.
    3. Deploy > New deployment > Web app > Execute as: Me > Who has access: Anyone.
    4. Salin URL Web App yang dijana, gantikan nilai di bawah. */
-const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxvgTNfjY09gtPv9HWed3RPbCSBBpBTZ3ljJ8PFPj-mzUviBY439JKY_s-wXwJDrPPxfg/exec";
+const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyXEuJ1GqMgh6AyJz89uj1owgiFq310_dM79uVijV97QFL1H-7GHvtibcKEq66PafvUsA/exec";
 
 /* Kunci rahsia API — MESTI SAMA PERSIS dengan API_SECRET dalam Code.gs.
    Ini disertakan pada setiap permintaan simpan/padam/reset supaya
@@ -2489,7 +2491,7 @@ async function saveToSheet(silent){
 
   async function attemptSave(){
     const controller = new AbortController();
-    const timer = setTimeout(()=>controller.abort(), 15000);
+    const timer = setTimeout(()=>controller.abort(), 12000);
     try{
       const res = await fetch(GAS_WEB_APP_URL, {
         method:"POST",
@@ -2518,7 +2520,7 @@ async function saveToSheet(silent){
   if(!result.ok){
     // satu percubaan semula automatik selepas rehat sekejap — kerap kali
     // kegagalan pertama cuma gangguan sekejap rangkaian/Apps Script sejuk.
-    await new Promise(r=>setTimeout(r, 1200));
+    await new Promise(r=>setTimeout(r, 800));
     result = await attemptSave();
   }
 
@@ -3515,7 +3517,7 @@ function repairDuplicateIds(){
 async function mergeAndSaveToSheet(record, isDelete){
   if(isGasConfigured() && schoolData.pengurus.nama && schoolData.pengurus.tel){
     try{
-      const fresh = await fetchSchoolFromSheet(currentSchoolLabel, 5000);
+      const fresh = await fetchSchoolFromSheet(currentSchoolLabel, 4000);
       if(fresh){
         let merged = fresh.peserta.slice();
         if(isDelete){
@@ -4157,12 +4159,17 @@ function getResultEntries(kategori, type, baseName, jantina){
   } else {
     // Acara kumpulan (relay) sedia berpasukan campur (2L2P/4L4P) — tidak diasingkan ikut jantina.
     // Kumpul juga NAMA setiap atlet dalam pasukan tersebut, bukan cuma nama pasukan.
+    // PENTING: acara KONGSI/TERBUKA (cth. "4x50M mix Bawah 10 Tahun" dikongsi B8+B10,
+    // "4x100M mix Terbuka..." dikongsi beberapa kategori umur) — peserta dari kategori
+    // BERBEZA yang mendaftar PASUKAN SAMA mesti terus dikumpulkan bersama, TIDAK boleh
+    // dipisahkan ikut kategori umur masing-masing.
+    const isMultiCategoryEvent = (baseName === SHARED_4X50_EVENT || baseName === OPEN_KUMPULAN_RENDAH_EVENT || baseName === OPEN_KUMPULAN_MENENGAH_EVENT || baseName === LEGACY_OPEN_KUMPULAN_EVENT);
     const seen = {};
     all.forEach((x, schoolIdx)=>{
       x.data.peserta.forEach(p=>{
-        if(p.kategori !== kategori) return;
+        if(!isMultiCategoryEvent && p.kategori !== kategori) return;
         p.kumpulan.forEach(evFull=>{
-          if(kumEventMatches(evFull, baseName, kategori)){
+          if(kumEventMatches(evFull, baseName, p.kategori)){
             const key = x.school.name + "|" + evFull;
             if(!seen[key]){
               seen[key] = { entryKey: key, label: evFull, sekolah: x.school.name, athletes: [] };
@@ -4347,6 +4354,7 @@ function renderKumpulanDashboard(){
   const schoolFilter = document.getElementById("kumpulanDashboardSchoolFilter").value;
   let html = "";
   let anyFound = false;
+  const renderedMultiCatEvents = new Set();
   Object.keys(CATEGORY_META).forEach(kat=>{
     const conf = EVENTS_BY_CATEGORY[kat];
     if(!conf) return;
@@ -4356,6 +4364,11 @@ function renderKumpulanDashboard(){
     const openEventForKat = getOpenKumpulanEventFor(kat);
     if(openEventForKat) kumList.push(openEventForKat);
     kumList.forEach(ev=>{
+      const isMultiCat = (ev === SHARED_4X50_EVENT || ev === OPEN_KUMPULAN_RENDAH_EVENT || ev === OPEN_KUMPULAN_MENENGAH_EVENT);
+      if(isMultiCat){
+        if(renderedMultiCatEvents.has(ev)) return; // dah dipaparkan bawah kategori lain — elak ulang
+        renderedMultiCatEvents.add(ev);
+      }
       let entries = getResultEntries(kat, "KUM", ev, "");
       if(schoolFilter) entries = entries.filter(en=>en.sekolah === schoolFilter);
       if(entries.length === 0) return;
@@ -4363,8 +4376,9 @@ function renderKumpulanDashboard(){
       const groups = (entries.length > HEAT_SIZE)
         ? distributeEntriesToHeats(entries.map(en=>({entryKey:en.entryKey, label:en.label, sekolah:en.sekolah})), Math.ceil(entries.length / HEAT_SIZE))
         : [entries];
+      const headLabel = isMultiCat ? "Pelbagai Kategori Umur" : meta.label;
       html += `<div class="startlist-block">
-        <div class="startlist-head cat-${kat}">${escapeHtml(meta.label)} \u2014 ${escapeHtml(ev)} <span class="event-quota-tag">${entries.length} pasukan</span></div>`;
+        <div class="startlist-head cat-${kat}">${escapeHtml(headLabel)} \u2014 ${escapeHtml(ev)} <span class="event-quota-tag">${entries.length} pasukan</span></div>`;
       groups.forEach((group, gi)=>{
         if(groups.length > 1){
           html += `<div class="startlist-heat-title">Acara Akhir ${gi+1}</div>`;
@@ -4375,13 +4389,13 @@ function renderKumpulanDashboard(){
             const athletes = (original.athletes||[]).map((a,ai)=>{
               const bibPart = a.noPeserta ? ' <span class="mono" style="opacity:0.65;">(No. '+escapeHtml(a.noPeserta)+')</span>' : '';
               const giliranPart = isAdminContext()
-                ? ` <select class="giliran-select" onchange="setAthleteGiliran(${a.schoolIdx}, '${a.id}', '${escapeHtml(en.label).replace(/'/g,"\\'")}', this.value)">
+                ? ` <select class="giliran-select no-print" onchange="setAthleteGiliran(${a.schoolIdx}, '${a.id}', '${escapeHtml(en.label).replace(/'/g,"\\'")}', this.value)">
                     <option value="">Giliran?</option>
                     ${[1,2,3,4].map(n=>`<option value="${n}" ${a.giliran===n?"selected":""}>Pelari ${n}</option>`).join("")}
                   </select>`
                 : (a.giliran ? ` <span class="giliran-badge">Pelari ${a.giliran}</span>` : "");
-              return `${ai+1}. ${escapeHtml(a.nama)}${bibPart}${giliranPart}`;
-            }).join("<br>");
+              return `<span class="no-print">${ai+1}. ${escapeHtml(a.nama)}${bibPart}${giliranPart}</span><span class="print-only">${escapeHtml(a.noPeserta||"-")}</span>`;
+            }).join('<span class="no-print"><br></span><span class="print-only">, </span>');
             return `<tr><td>${i+1}</td><td><b>${escapeHtml(en.label)}</b></td><td>${escapeHtml(en.sekolah)}</td><td>${athletes}</td></tr>`;
           }).join("") +
           `</tbody></table>`;
@@ -4396,6 +4410,7 @@ function renderAllFormsList(){
   const wrap = document.getElementById("allFormsListWrap");
   if(!wrap) return;
   const items = [];
+  const renderedMultiCatItems = new Set();
   Object.keys(CATEGORY_META).forEach(kat=>{
     const conf = EVENTS_BY_CATEGORY[kat];
     if(!conf) return;
@@ -4406,7 +4421,16 @@ function renderAllFormsList(){
         items.push({ kategori:kat, type:"IND", acara:ev, jantina, count:entries.length, isPadang:PADANG_EVENTS.includes(ev) });
       });
     });
-    conf.kumpulan.forEach(ev=>{
+    let kumList = conf.kumpulan.slice();
+    if(SHARED_4X50_CATEGORIES.includes(kat) && !kumList.includes(SHARED_4X50_EVENT)) kumList.unshift(SHARED_4X50_EVENT);
+    const openEventForKat = getOpenKumpulanEventFor(kat);
+    if(openEventForKat) kumList.push(openEventForKat);
+    kumList.forEach(ev=>{
+      const isMultiCat = (ev === SHARED_4X50_EVENT || ev === OPEN_KUMPULAN_RENDAH_EVENT || ev === OPEN_KUMPULAN_MENENGAH_EVENT);
+      if(isMultiCat){
+        if(renderedMultiCatItems.has(ev)) return;
+        renderedMultiCatItems.add(ev);
+      }
       const entries = getResultEntries(kat, "KUM", ev, "");
       if(entries.length === 0) return;
       items.push({ kategori:kat, type:"KUM", acara:ev, jantina:"MIX", count:entries.length, isPadang:false });
@@ -4527,10 +4551,10 @@ function printFullStartList(){
           entries.map((en,i)=>`<tr><td>${i+1}</td><td>${escapeHtml(en.noPeserta||"-")}</td><td>${escapeHtml(en.label)}</td><td>${escapeHtml(en.sekolah)}</td></tr>`).join("") +
           `</tbody></table>`;
       } else {
-        html += `<table class="print-form-table"><thead><tr><th>No.</th><th>Pasukan</th><th>Sekolah</th><th>Ahli Pasukan</th></tr></thead><tbody>` +
+        html += `<table class="print-form-table"><thead><tr><th>No.</th><th>Pasukan</th><th>Sekolah</th><th>No. Badan Ahli Pasukan</th></tr></thead><tbody>` +
           entries.map((en,i)=>{
-            const athletes = (en.athletes||[]).map((a,ai)=>`${ai+1}. ${escapeHtml(a.nama)}${a.noPeserta?" (No. "+escapeHtml(a.noPeserta)+")":""}`).join("<br>");
-            return `<tr><td>${i+1}</td><td>${escapeHtml(en.label)}</td><td>${escapeHtml(en.sekolah)}</td><td>${athletes}</td></tr>`;
+            const bibNumbers = (en.athletes||[]).map(a=>escapeHtml(a.noPeserta||"-")).join(", ");
+            return `<tr><td>${i+1}</td><td>${escapeHtml(en.label)}</td><td>${escapeHtml(en.sekolah)}</td><td>${bibNumbers}</td></tr>`;
           }).join("") +
           `</tbody></table>`;
       }
@@ -5017,6 +5041,7 @@ function buildAthleteStats(peringkat, jantina){
 function buildEventScheduleItems(){
   const padangItems = [];
   const trekItems = [];
+  const renderedMultiCatScheduleEvents = new Set();
   const catOrder = ["B8","B10","B12","B15","B19","SD_SR","SD_SM","PRA"];
 
   /* Pengecualian khas — acara balapan ini dipindah ke Hari 1 (bersama acara
@@ -5058,7 +5083,12 @@ function buildEventScheduleItems(){
     const openEventForKat = getOpenKumpulanEventFor(kat);
     if(openEventForKat) kumList.push(openEventForKat);
     kumList.forEach(ev=>{
-      trekItems.push({ kategori:kat, katLabel:meta.label + " (Berpasukan)", acara:ev, jantina:"", type:"KUM" });
+      const isMultiCat = (ev === SHARED_4X50_EVENT || ev === OPEN_KUMPULAN_RENDAH_EVENT || ev === OPEN_KUMPULAN_MENENGAH_EVENT);
+      if(isMultiCat){
+        if(renderedMultiCatScheduleEvents.has(ev)) return; // dah dimasukkan bawah kategori lain — elak ulang
+        renderedMultiCatScheduleEvents.add(ev);
+      }
+      trekItems.push({ kategori:kat, katLabel:(isMultiCat ? "Pelbagai Kategori Umur" : meta.label) + " (Berpasukan)", acara:ev, jantina:"", type:"KUM" });
     });
   });
 
