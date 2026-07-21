@@ -997,6 +997,8 @@ tbody tr:hover{background:rgba(11,31,92,0.03);}
   transition:border-color .15s, background .15s;
 }
 .event-check.checked{border-color:var(--johor-blue);background:rgba(11,31,92,0.05);}
+.event-check.event-check-full{opacity:0.55;background:rgba(224,36,36,0.04);}
+.event-check.event-check-full .ename{color:var(--muted);}
 .event-check.disabled{opacity:0.45;cursor:not-allowed;}
 .event-check input{margin-top:2px;}
 .event-check .ename{flex:1;}
@@ -2393,7 +2395,7 @@ function formatLockoutRemaining(ms){
    2. Extensions > Apps Script > tampal kandungan fail Code.gs yang disertakan.
    3. Deploy > New deployment > Web app > Execute as: Me > Who has access: Anyone.
    4. Salin URL Web App yang dijana, gantikan nilai di bawah. */
-const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwHCr96rJwra1ioL0fpEPU3D6r1m-2NDgwoKxFYLrPpzk3nhqqBIpcCS6MUA5X1yaPITQ/exec";
+const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyiTPlhEfGnL9d9IEnmEde1HBfa7s6mZngtSJhlFAm6LDrCA-jJ_cFWCahdW1t7UhPr8w/exec";
 
 /* Kunci rahsia API — MESTI SAMA PERSIS dengan API_SECRET dalam Code.gs.
    Ini disertakan pada setiap permintaan simpan/padam/reset supaya
@@ -3331,9 +3333,14 @@ function renderEventCheckboxes(){
       label.className = "event-check";
       const checked = selectedKumpulan.includes(evName);
       if(checked) label.classList.add("checked");
+      const need = requiredTeamSize(evName);
+      const currentCount = schoolData.peserta.filter(p=>p.id !== currentEditingId() && p.kumpulan.includes(evName)).length;
+      const isFull = need !== null && !checked && currentCount >= need;
+      if(isFull) label.classList.add("event-check-full");
+      const fullBadge = isFull ? ` <span class="ehint" style="color:var(--danger);font-weight:700;">PENUH (${currentCount}/${need})</span>` : "";
       label.innerHTML = `
-        <input type="checkbox" data-type="kumpulan" value="${evName}" ${checked?"checked":""} onchange="onEventCheckChange(this)">
-        <span class="ename">${evName}${team==="A" ? ageHint : ""}${(isOpen && team==="A") ? '<span class="ehint">Terbuka — semua sekolah kategori berkaitan boleh menyertai</span>' : ""}${(isShared4x50 && team==="A") ? '<span class="ehint">Dikongsi — kategori Bawah 8 dan Bawah 10 boleh menyertai</span>' : ""}${team!=="A" ? '<span class="ehint">Guna Pasukan '+team+' jika sekolah menghantar lebih daripada '+(team==="B"?"1":team==="C"?"2":"3")+' pasukan untuk acara ini</span>' : ""}</span>
+        <input type="checkbox" data-type="kumpulan" ${isFull?'data-team-full="true"':''} value="${evName}" ${checked?"checked":""} ${isFull?"disabled":""} onchange="onEventCheckChange(this)">
+        <span class="ename">${evName}${team==="A" ? ageHint : ""}${(isOpen && team==="A") ? '<span class="ehint">Terbuka — semua sekolah kategori berkaitan boleh menyertai</span>' : ""}${(isShared4x50 && team==="A") ? '<span class="ehint">Dikongsi — kategori Bawah 8 dan Bawah 10 boleh menyertai</span>' : ""}${team!=="A" ? '<span class="ehint">Guna Pasukan '+team+' jika sekolah menghantar lebih daripada '+(team==="B"?"1":team==="C"?"2":"3")+' pasukan untuk acara ini</span>' : ""}${fullBadge}</span>
       `;
       kumpulanWrap.appendChild(label);
     });
@@ -3368,10 +3375,11 @@ function applyEventSelectionLimits(){
   });
   kumpulanBoxes.forEach(b=>{
     const label = b.closest(".event-check");
+    const wasTeamFull = b.dataset.teamFull === "true" && !b.checked;
     if(!b.checked && kumpulanChecked >= MAX_KUMPULAN){
       b.disabled = true;
       label.classList.add("disabled");
-    } else {
+    } else if(!wasTeamFull){
       b.disabled = false;
       label.classList.remove("disabled");
     }
@@ -3606,6 +3614,19 @@ async function savePeserta(){
     }
   }
 
+  // sahkan kuota PASUKAN (4 ahli untuk 4x100M/4x50M, 2 ahli untuk 2x50M) —
+  // sebaik pasukan tertentu cukup ahli, tiada lagi boleh masuk pasukan sama.
+  for(const evName of kumpulan){
+    const need = requiredTeamSize(evName);
+    if(need === null) continue;
+    const currentCount = schoolData.peserta.filter(p=>p.id !== id && p.kumpulan.includes(evName)).length;
+    if(currentCount >= need){
+      formErr.textContent = "Pasukan '" + evName + "' sudah PENUH (" + currentCount + "/" + need + " ahli). Sila pilih pasukan lain (B/C/D) atau kurangkan pilihan.";
+      formErr.classList.add("show");
+      return;
+    }
+  }
+
   const noPesertaFinal = noPesertaRaw.trim();
 
   const nowIso = new Date().toISOString();
@@ -3794,9 +3815,10 @@ function escapeHtml(str){
 }
 
 function requiredTeamSize(evName){
-  if(evName.startsWith("4X100M")) return 4;
-  if(evName.startsWith("4X50M")) return 4;
-  if(evName.startsWith("2X50M")) return 2;
+  const upper = evName.toUpperCase();
+  if(upper.startsWith("4X100M")) return 4;
+  if(upper.startsWith("4X50M")) return 4;
+  if(upper.startsWith("2X50M")) return 2;
   return null;
 }
 
