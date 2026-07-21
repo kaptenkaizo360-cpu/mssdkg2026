@@ -2399,7 +2399,7 @@ function formatLockoutRemaining(ms){
    2. Extensions > Apps Script > tampal kandungan fail Code.gs yang disertakan.
    3. Deploy > New deployment > Web app > Execute as: Me > Who has access: Anyone.
    4. Salin URL Web App yang dijana, gantikan nilai di bawah. */
-const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbx5dh-tXjcb5skAuGoBWw9Y-Q69ZbfJ7jm72cfnNfoLWkC5Nj2zJUGKHtARCkyDd8R_xw/exec";
+const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzQW-jip2rujoy2hI8mF6XR6-X0JEIOMbpaEL7w21dDBVF_TWLnrtqkJLrmxoH2mncPcQ/exec";
 
 /* Kunci rahsia API — MESTI SAMA PERSIS dengan API_SECRET dalam Code.gs.
    Ini disertakan pada setiap permintaan simpan/padam/reset supaya
@@ -3529,16 +3529,34 @@ function repairDuplicateIds(){
    ini, gabungkan perubahan semasa (tambah/sunting/padam SATU rekod)
    di atas versi terkini itu — bukan tulis-ganti seluruh senarai lama.
    ========================================================= */
-async function mergeAndSaveToSheet(record, isDelete){
+/* Kunci padanan STABIL untuk rekod peserta — guna No. Peserta (yang mesti
+   unik dalam satu sekolah, dikuatkuasakan oleh validateNoPeserta) sebagai
+   kunci utama, kembali ke Nama+No.OKU jika No. Peserta kosong (medan
+   pilihan). TIDAK guna "id" sebab id yang datang dari Sheet dijana semula
+   ikut KEDUDUKAN BARIS setiap kali data ditarik — kalau susunan baris
+   berubah (cth. sekolah lain disimpan di antara masa muat & masa padam),
+   id LAMA tidak lagi sepadan dengan id BAHARU, menyebabkan padam/sunting
+   'terlepas' rekod yang betul (rekod lama kekal berhantu dalam Sheet). */
+function stablePesertaKey(p){
+  const np = String(p.noPeserta || "").trim().toLowerCase();
+  if(np !== "") return "np:" + np;
+  return "na:" + String(p.nama||"").trim().toLowerCase() + "|" + String(p.noOku||"").trim().toLowerCase();
+}
+
+async function mergeAndSaveToSheet(record, isDelete, oldRecordForMatch){
   if(isGasConfigured() && schoolData.pengurus.nama && schoolData.pengurus.tel){
     try{
       const fresh = await fetchSchoolFromSheet(currentSchoolLabel, 4000);
       if(fresh){
         let merged = fresh.peserta.slice();
+        // Guna identiti LAMA untuk cari kedudukan (kalau ada, cth. sedang
+        // sunting dan No. Peserta itu sendiri ditukar) — tapi tulis data
+        // BAHARU pada kedudukan tersebut.
+        const key = stablePesertaKey(oldRecordForMatch || record);
         if(isDelete){
-          merged = merged.filter(p=>p.id !== record);
+          merged = merged.filter(p=>stablePesertaKey(p) !== key);
         } else {
-          const idx = merged.findIndex(p=>p.id === record.id);
+          const idx = merged.findIndex(p=>stablePesertaKey(p) === key);
           if(idx >= 0) merged[idx] = record; else merged.push(record);
         }
         schoolData.peserta = merged;
@@ -3574,7 +3592,8 @@ async function mergeAndSaveAllToSheet(silent){
       if(fresh){
         const merged = fresh.peserta.slice();
         schoolData.peserta.forEach(localP=>{
-          const idx = merged.findIndex(p=>p.id === localP.id);
+          const key = stablePesertaKey(localP);
+          const idx = merged.findIndex(p=>stablePesertaKey(p) === key);
           if(idx >= 0) merged[idx] = localP; else merged.push(localP);
         });
         schoolData.peserta = merged;
@@ -3707,7 +3726,7 @@ async function savePeserta(){
   let syncOk = false;
   let syncMessage = "";
   if(isGasConfigured() && schoolData.pengurus.nama && schoolData.pengurus.tel){
-    syncOk = await mergeAndSaveToSheet(record, false);
+    syncOk = await mergeAndSaveToSheet(record, false, existingRecord);
     if(!syncOk){
       markUnsaved();
       syncMessage = "⚠️ Disimpan pada peranti ini, tetapi GAGAL disegerak ke Google Sheet (" + (lastSaveFailReason || "sebab tidak diketahui") + "). Sila tekan butang Simpan di header sebelum log keluar.";
@@ -3780,7 +3799,7 @@ async function confirmDeletePeserta(){
   }
 
   if(isGasConfigured() && schoolData.pengurus.nama && schoolData.pengurus.tel){
-    const success = await mergeAndSaveToSheet(id, true);
+    const success = await mergeAndSaveToSheet(p, true);
     if(success){
       showToast("Peserta dipadam dan disegerak ke pangkalan data pusat.", "ok");
     } else {
