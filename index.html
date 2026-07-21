@@ -2399,7 +2399,7 @@ function formatLockoutRemaining(ms){
    2. Extensions > Apps Script > tampal kandungan fail Code.gs yang disertakan.
    3. Deploy > New deployment > Web app > Execute as: Me > Who has access: Anyone.
    4. Salin URL Web App yang dijana, gantikan nilai di bawah. */
-const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwrxfYOpvMnbE2hleeUgLJ4gJCTdv1zQlK4bvSewavPVFzwLvsy7t7Y9PXGJGKZ_qvPuw/exec";
+const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyh40oiY0AKbB_ZRZYbSa34KFnrkAQDp5Ju8MZISrI-BkbTEsakY69k3oFVnmDvk1P0IA/exec";
 
 /* Kunci rahsia API — MESTI SAMA PERSIS dengan API_SECRET dalam Code.gs.
    Ini disertakan pada setiap permintaan simpan/padam/reset supaya
@@ -4310,7 +4310,7 @@ function distributeEntriesToHeats(entries, numHeats){
         targetHeat = heats.length - 1;
       }
       const en = queue.shift();
-      heats[targetHeat].push({ entryKey:en.entryKey, label:en.label, sekolah:en.sekolah, noPeserta:en.noPeserta, nilai:null, rank:null, advancing:false });
+      heats[targetHeat].push({ entryKey:en.entryKey, label:en.label, sekolah:en.sekolah, noPeserta:en.noPeserta, athletes:en.athletes, nilai:null, rank:null, advancing:false });
       remaining--;
     }
   }
@@ -4460,7 +4460,7 @@ function renderKumpulanDashboard(){
       if(entries.length === 0) return;
       anyFound = true;
       const groups = (entries.length > HEAT_SIZE)
-        ? distributeEntriesToHeats(entries.map(en=>({entryKey:en.entryKey, label:en.label, sekolah:en.sekolah})), Math.ceil(entries.length / HEAT_SIZE))
+        ? distributeEntriesToHeats(entries.map(en=>({entryKey:en.entryKey, label:en.label, sekolah:en.sekolah, athletes:en.athletes})), Math.ceil(entries.length / HEAT_SIZE))
         : [entries];
       const headLabel = isMultiCat ? "Pelbagai Kategori Umur" : meta.label;
       html += `<div class="startlist-block">
@@ -4753,10 +4753,10 @@ function getHeatGroupsForPrint(ctx){
   if(ctx.isPadang) return null;
   if(ctx.entries.length <= HEAT_SIZE) return null;
   if(heatState && currentResultsContext === ctx){
-    return heatState.heats.filter(h=>h.length).map(h=>h.map(en=>({label:en.label, sekolah:en.sekolah, noPeserta:en.noPeserta})));
+    return heatState.heats.filter(h=>h.length).map(h=>h.map(en=>({label:en.label, sekolah:en.sekolah, noPeserta:en.noPeserta, athletes:en.athletes})));
   }
   const numHeats = Math.ceil(ctx.entries.length / HEAT_SIZE);
-  return distributeEntriesToHeats(ctx.entries, numHeats).map(h=>h.map(en=>({label:en.label, sekolah:en.sekolah, noPeserta:en.noPeserta})));
+  return distributeEntriesToHeats(ctx.entries, numHeats).map(h=>h.map(en=>({label:en.label, sekolah:en.sekolah, noPeserta:en.noPeserta, athletes:en.athletes})));
 }
 
 function generatePrintForm(type){
@@ -4887,7 +4887,7 @@ function renderFinalEntryList(){
     const valStr = existing ? existing.nilai : "";
     return `
       <div class="results-entry-row">
-        <div class="re-label">${escapeHtml(en.label)}<span class="re-school">${escapeHtml(en.sekolah)}</span></div>
+        <div class="re-label">${escapeHtml(en.label)}${en.noPeserta ? ` <span class="mono" style="opacity:0.65;">(No. ${escapeHtml(en.noPeserta)})</span>` : ""}<span class="re-school">${escapeHtml(en.sekolah)}</span></div>
         <input type="number" step="0.01" placeholder="${ctx.isPadang?'meter':'saat'}" data-entry-key="${en.entryKey}" value="${valStr}">
       </div>`;
   }).join("");
@@ -4938,7 +4938,7 @@ function renderHeatMode(){
       ${heat.map((en,eIdx)=>`
         <div class="results-entry-row">
           <input type="checkbox" class="heat-advance-cb" data-heat="${hIdx}" data-idx="${eIdx}" ${en.advancing?"checked":""} title="Layak ke Pusingan Muktamad">
-          <div class="re-label">${en.rank?`<span class="heat-rank">#${en.rank}</span>`:""}${escapeHtml(en.label)}<span class="re-school">${escapeHtml(en.sekolah)}</span></div>
+          <div class="re-label">${en.rank?`<span class="heat-rank">#${en.rank}</span>`:""}${escapeHtml(en.label)}${en.noPeserta ? ` <span class="mono" style="opacity:0.65;">(No. ${escapeHtml(en.noPeserta)})</span>` : ""}<span class="re-school">${escapeHtml(en.sekolah)}</span></div>
           <input type="number" step="0.01" class="heat-time-input" data-heat="${hIdx}" data-idx="${eIdx}" value="${en.nilai===null?'':en.nilai}" placeholder="${ctx.isPadang?'meter':'saat'}">
           <select class="heat-move-select" data-heat="${hIdx}" data-idx="${eIdx}" title="Pindah ke Akhir lain">${moveOptions}</select>
         </div>`).join("")}
@@ -5998,7 +5998,7 @@ function filterRosterByEvent(roster, kategori, type, acara, jantina){
     roster.forEach(r=>{
       if(r.kategori !== kategori || r.jantina !== jantina) return;
       const list = (r.individu || "").split(" | ").map(s=>s.trim()).filter(Boolean);
-      if(list.includes(acara)) out.push({ label:r.nama, sekolah:r.sekolah });
+      if(list.includes(acara)) out.push({ label:r.nama, sekolah:r.sekolah, noPeserta:r.noPeserta || "" });
     });
   } else {
     const seen = {};
@@ -6009,7 +6009,7 @@ function filterRosterByEvent(roster, kategori, type, acara, jantina){
         if(kumEventMatches(evFull, acara, kategori)){
           const key = r.sekolah + "|" + evFull;
           if(!seen[key]){ seen[key] = { label:evFull, sekolah:r.sekolah, athletes:[] }; out.push(seen[key]); }
-          seen[key].athletes.push({ nama: r.nama, noPeserta: "" });
+          seen[key].athletes.push({ nama: r.nama, noPeserta: r.noPeserta || "" });
         }
       });
     });
@@ -6046,7 +6046,7 @@ async function toggleStatChip(el, kategori, jantina){
     return;
   }
   body.innerHTML = `<div style="font-size:13.5px;">` +
-    filtered.map((r,i)=>`<div class="results-entry-row" style="cursor:default;"><div class="re-label" style="flex:1;">${i+1}. <b>${escapeHtml(r.nama)}</b><span class="re-school">${escapeHtml(r.sekolah)}${r.jantina && kategori==="ALL" ? " \u00b7 "+(r.jantina==="L"?"Lelaki":"Perempuan") : ""}</span></div></div>`).join("") +
+    filtered.map((r,i)=>`<div class="results-entry-row" style="cursor:default;"><div class="re-label" style="flex:1;">${i+1}. <b>${escapeHtml(r.nama)}</b>${r.noPeserta ? ` <span class="mono" style="opacity:0.65;">(No. ${escapeHtml(r.noPeserta)})</span>` : ""}<span class="re-school">${escapeHtml(r.sekolah)}${r.jantina && kategori==="ALL" ? " \u00b7 "+(r.jantina==="L"?"Lelaki":"Perempuan") : ""}</span></div></div>`).join("") +
     `</div>`;
 }
 
