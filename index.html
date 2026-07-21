@@ -2395,7 +2395,7 @@ function formatLockoutRemaining(ms){
    2. Extensions > Apps Script > tampal kandungan fail Code.gs yang disertakan.
    3. Deploy > New deployment > Web app > Execute as: Me > Who has access: Anyone.
    4. Salin URL Web App yang dijana, gantikan nilai di bawah. */
-const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyiTPlhEfGnL9d9IEnmEde1HBfa7s6mZngtSJhlFAm6LDrCA-jJ_cFWCahdW1t7UhPr8w/exec";
+const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwVDEGj66NjRk1asqejYavphdIdjCEeBj4UzuyuqSur9MD640jTGZEs4XEtkgJPVVHNPg/exec";
 
 /* Kunci rahsia API — MESTI SAMA PERSIS dengan API_SECRET dalam Code.gs.
    Ini disertakan pada setiap permintaan simpan/padam/reset supaya
@@ -2593,7 +2593,8 @@ async function fetchAllFromSheet(timeoutMs){
         noPeserta: String(row.NoPeserta).toUpperCase(),
         individu: row.AcaraIndividu ? String(row.AcaraIndividu).split(" | ").filter(Boolean) : [],
         kumpulan: row.AcaraKumpulan ? String(row.AcaraKumpulan).split(" | ").filter(Boolean) : [],
-        giliran: decodeGiliran(row.Giliran)
+        giliran: decodeGiliran(row.Giliran),
+        savedBy: row.SavedBy || ""
       });
     });
     Object.values(bySchool).forEach(s=>{ delete s._rowCounter; });
@@ -2636,7 +2637,8 @@ async function fetchSchoolFromSheet(schoolName, timeoutMs){
         noPeserta: String(row.NoPeserta).toUpperCase(),
         individu: row.AcaraIndividu ? String(row.AcaraIndividu).split(" | ").filter(Boolean) : [],
         kumpulan: row.AcaraKumpulan ? String(row.AcaraKumpulan).split(" | ").filter(Boolean) : [],
-        giliran: decodeGiliran(row.Giliran)
+        giliran: decodeGiliran(row.Giliran),
+        savedBy: row.SavedBy || ""
       });
     });
     return result;
@@ -3639,7 +3641,8 @@ async function savePeserta(){
     individu, kumpulan,
     giliran: (existingRecord && existingRecord.giliran) ? existingRecord.giliran : {},
     createdAt: isEdit ? (existingRecord.createdAt || nowIso) : nowIso,
-    updatedAt: nowIso
+    updatedAt: nowIso,
+    savedBy: adminEditMode ? "ADMIN" : (schoolData.pengurus.tel || "")
   };
 
   if(isEdit){
@@ -3799,7 +3802,7 @@ function renderTable(){
       <td><span class="gender-tag ${p.jantina}">${p.jantina==='L'?'Lelaki':'Perempuan'}</span></td>
       <td>${eventChips(p.individu)}</td>
       <td>${eventChips(p.kumpulan,'kumpulan')}</td>
-      <td class="mono" style="font-size:11px;color:var(--muted);white-space:nowrap;">${formatDateTime(p.updatedAt)}</td>
+      <td class="mono" style="font-size:11px;color:var(--muted);white-space:nowrap;">${formatDateTime(p.updatedAt)}${p.savedBy ? `<br><span style="opacity:0.75;">oleh: ${escapeHtml(p.savedBy)}</span>` : ""}</td>
       <td class="no-print">
         <button class="btn btn-ghost btn-sm" onclick="openEditModal('${p.id}')">Sunting</button>
         <button class="btn btn-outline-red btn-sm" onclick="deletePeserta('${p.id}')">Padam</button>
@@ -4672,12 +4675,14 @@ function generatePrintForm(type){
 
   function buildTable(entries, heatLabel){
     const rows = entries.map((en,idx)=>{
+      const isTeamEntry = Array.isArray(en.athletes);
+      const teamBibNumbers = isTeamEntry ? en.athletes.map(a=>escapeHtml(a.noPeserta||"-")).join(", ") : null;
       const cells = meta.cols.map(col=>{
         if(col === "Nama") return escapeHtml(en.label);
         if(col === "Sekolah") return escapeHtml(en.sekolah);
         if(col === "No. Lorong") return String(idx+1);
-        if(col === "No. Peserta") return escapeHtml(en.noPeserta || "-");
-        if(col === "No.") return escapeHtml(en.noPeserta || String(idx+1));
+        if(col === "No. Peserta") return isTeamEntry ? teamBibNumbers : escapeHtml(en.noPeserta || "-");
+        if(col === "No.") return isTeamEntry ? teamBibNumbers : escapeHtml(en.noPeserta || String(idx+1));
         return "";
       });
       return `<tr>${cells.map(c=>`<td>${c}</td>`).join("")}</tr>`;
@@ -4685,7 +4690,7 @@ function generatePrintForm(type){
     return `
       ${heatLabel ? `<h3 style="font-family:'Oswald',sans-serif;text-transform:uppercase;margin:22px 0 8px;border-bottom:2px solid #000;padding-bottom:4px;">${escapeHtml(heatLabel)}</h3>` : ""}
       <table class="print-form-table">
-        <thead><tr>${meta.cols.map(c=>`<th>${escapeHtml(c)}</th>`).join("")}</tr></thead>
+        <thead><tr>${meta.cols.map(c=>`<th>${escapeHtml(c === "No. Peserta" && ctx.type === "KUM" ? "No. Badan Ahli Pasukan" : c)}</th>`).join("")}</tr></thead>
         <tbody>${rows}</tbody>
       </table>`;
   }
@@ -5728,7 +5733,7 @@ function renderAdminTable(){
       <td><span class="gender-tag ${p.jantina}">${p.jantina==='L'?'Lelaki':'Perempuan'}</span></td>
       <td>${eventChips(p.individu)}</td>
       <td>${eventChips(p.kumpulan,'kumpulan')}</td>
-      <td class="mono" style="font-size:11px;color:var(--muted);white-space:nowrap;">${formatDateTime(p.updatedAt)}</td>
+      <td class="mono" style="font-size:11px;color:var(--muted);white-space:nowrap;">${formatDateTime(p.updatedAt)}${p.savedBy ? `<br><span style="opacity:0.75;">oleh: ${escapeHtml(p.savedBy)}</span>` : ""}</td>
       <td class="no-print" style="white-space:nowrap;">
         <button class="btn btn-ghost btn-sm" style="padding:4px 8px;" onclick="adminEditPeserta(${p.schoolIdx}, '${p.id}')" title="Sunting peserta ini">Sunting</button>
         <button class="btn btn-outline-red btn-sm" style="padding:4px 8px;" onclick="adminDeletePeserta(${p.schoolIdx}, '${p.id}')" title="Padam peserta ini">Padam</button>
