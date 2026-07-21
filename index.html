@@ -1592,7 +1592,7 @@ body.printing-form #printFormArea{display:block !important;padding:24px;}
         Sunting Pengurus
       </button>
       <span style="position:relative;display:inline-flex;">
-        <button class="btn btn-primary btn-sm" id="btnSaveSheet" onclick="saveToSheet()" title="Simpan data ke pangkalan data pusat">
+        <button class="btn btn-primary btn-sm" id="btnSaveSheet" onclick="mergeAndSaveAllToSheet()" title="Simpan data ke pangkalan data pusat">
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3h11l3 3v15H5z"/><path d="M8 3v6h8V3"/><path d="M7 21v-8h10v8"/></svg>
           Simpan
         </button>
@@ -2395,7 +2395,7 @@ function formatLockoutRemaining(ms){
    2. Extensions > Apps Script > tampal kandungan fail Code.gs yang disertakan.
    3. Deploy > New deployment > Web app > Execute as: Me > Who has access: Anyone.
    4. Salin URL Web App yang dijana, gantikan nilai di bawah. */
-const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwVDEGj66NjRk1asqejYavphdIdjCEeBj4UzuyuqSur9MD640jTGZEs4XEtkgJPVVHNPg/exec";
+const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwvZamXom2uROGz55zp6SE3rzvD6F24t_LiqxjMbWmmc2xrYY7LGJLhY1XS-pqAqUgezA/exec";
 
 /* Kunci rahsia API — MESTI SAMA PERSIS dengan API_SECRET dalam Code.gs.
    Ini disertakan pada setiap permintaan simpan/padam/reset supaya
@@ -2549,7 +2549,7 @@ async function saveAndLogout(){
   const originalHtml = btn.innerHTML;
   btn.disabled = true;
   btn.innerHTML = "Menyimpan...";
-  const success = await saveToSheet();
+  const success = await mergeAndSaveAllToSheet();
   btn.disabled = false;
   btn.innerHTML = originalHtml;
 
@@ -2933,7 +2933,7 @@ async function doLogin(){
   if(wasRepaired){
     logAction("baik-pulih", currentSchoolLabel, "ID peserta berlanggar dikesan dan dibaiki automatik pada " + formatDateTime(new Date().toISOString()));
     if(isGasConfigured() && schoolData.pengurus.nama){
-      saveToSheet(true);
+      mergeAndSaveAllToSheet(true);
     }
   }
 
@@ -3070,7 +3070,7 @@ async function savePengurus(){
   enterApp();
 
   if(isGasConfigured()){
-    const success = await saveToSheet(true);
+    const success = await mergeAndSaveAllToSheet(true);
     if(success){
       if(isFirstTimeReg){
         showToast("Pendaftaran berjaya! Nombor " + telNormalized + " kini kata laluan tetap sekolah anda.", "ok");
@@ -3550,6 +3550,39 @@ async function mergeAndSaveToSheet(record, isDelete){
     }catch(err){ console.error("mergeAndSaveToSheet fetch error:", err); }
   }
   return await saveToSheet(true);
+}
+
+/* =========================================================
+   SIMPAN SELAMAT-GABUNG (SEMUA REKOD) — dipakai oleh butang "Simpan"
+   di header dan "Simpan & Log Keluar", yang menyimpan SELURUH senarai
+   peserta sekaligus (bukan satu rekod). Sebelum ini laluan-laluan ini
+   TERUS tulis-ganti Sheet guna array tempatan semata-mata — kalau sesi
+   ini sedikit lapuk (cth. tab dibuka lama, staff lain sempat tambah
+   peserta di peranti lain dalam masa tu), tekan Simpan/Log Keluar akan
+   PADAM balik tambahan staff lain tanpa disedari. Fungsi ini elakkan
+   itu — tarik dahulu versi TERKINI, gabungkan senarai tempatan di atas
+   versi terkini itu (upsert ikut ID), bukan tulis-ganti terus.
+   ========================================================= */
+async function mergeAndSaveAllToSheet(silent){
+  if(isGasConfigured() && schoolData.pengurus.nama && schoolData.pengurus.tel){
+    try{
+      const fresh = await fetchSchoolFromSheet(currentSchoolLabel, 4000);
+      if(fresh){
+        const merged = fresh.peserta.slice();
+        schoolData.peserta.forEach(localP=>{
+          const idx = merged.findIndex(p=>p.id === localP.id);
+          if(idx >= 0) merged[idx] = localP; else merged.push(localP);
+        });
+        schoolData.peserta = merged;
+        schoolData.pengurus.nama = schoolData.pengurus.nama || fresh.pengurus.nama;
+        schoolData.pengurus.tel = schoolData.pengurus.tel || fresh.pengurus.tel;
+        persistSchoolData();
+        populateFilterKategoriOptions();
+        renderAll();
+      }
+    }catch(err){ console.error("mergeAndSaveAllToSheet fetch error:", err); }
+  }
+  return await saveToSheet(silent);
 }
 
 async function savePeserta(){
@@ -5082,6 +5115,8 @@ function buildEventScheduleItems(){
      padang) atas permintaan, walaupun ia acara balapan/individu. */
   const FORCE_DAY1 = [
     { kategori:"B19", jantina:"P", acara:"100M" },
+    { kategori:"B10", jantina:"L", acara:"100M" },
+    { kategori:"B10", jantina:"P", acara:"100M" },
     { kategori:"B12", jantina:"L", acara:"200M" },
     { kategori:"B12", jantina:"P", acara:"200M" },
     { kategori:"B19", jantina:"P", acara:"200M" },
