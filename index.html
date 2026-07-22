@@ -2418,7 +2418,7 @@ function formatLockoutRemaining(ms){
    2. Extensions > Apps Script > tampal kandungan fail Code.gs yang disertakan.
    3. Deploy > New deployment > Web app > Execute as: Me > Who has access: Anyone.
    4. Salin URL Web App yang dijana, gantikan nilai di bawah. */
-const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzhykc_GHaUxV82FYlMRQnQ8LeyWULq2zJsv5mSCV_lUxutgzuktaTR5upeAGaGXSWI4g/exec";
+const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxW7e4OI78MKKaYT4nPNp3HuBW_psFae_Vyoh4VYHec-e-c-VleI4xHeo2HqjFItfxZjw/exec";
 
 /* Kunci rahsia API — MESTI SAMA PERSIS dengan API_SECRET dalam Code.gs.
    Ini disertakan pada setiap permintaan simpan/padam/reset supaya
@@ -4940,7 +4940,7 @@ function renderHeatMode(){
 
   let html = `<div class="field-note" style="margin-bottom:12px;">
     <b>${entries.length} peserta/pasukan didaftarkan \u2014 melebihi had 8, dibahagikan kepada ${heatState.heats.length} Akhir.</b>
-    Masukkan ${ctx.isPadang ? "jarak" : "masa"}, klik "Auto Susun", <b>guna "Pindah ke" untuk imbangkan/susun semula peserta antara Akhir mengikut kesesuaian</b>, tandakan yang layak ke Pusingan Muktamad, kemudian sahkan di bawah.
+    Masukkan ${ctx.isPadang ? "jarak" : "masa"} untuk setiap Akhir, klik "Auto Susun" untuk kira kedudukan dalam Akhir tersebut, kemudian klik <b>"Simpan Akhir X"</b> untuk terus simpan ke Google Sheet \u2014 <b>tak perlu tunggu isi semua Akhir dahulu</b>. Simpan satu Akhir TIDAK akan hapuskan keputusan Akhir lain yang telah disimpan.
   </div>`;
 
   heatState.heats.forEach((heat, hIdx)=>{
@@ -4951,8 +4951,8 @@ function renderHeatMode(){
     const collisionWarning = collidingSchools.length
       ? `<div class="error-text show" style="margin:6px 0;">\u26A0\uFE0F Bertembung: ${collidingSchools.map(s=>escapeHtml(s)+" ("+schoolCounts[s]+")").join(", ")} \u2014 lebih daripada ${MAX_SAME_SCHOOL_PER_HEAT} peserta/pasukan sekolah sama. Pindahkan sebahagian ke Akhir lain.</div>`
       : "";
-    html += `<div class="heat-card">
-      <div class="heat-title">Akhir ${hIdx+1} <span style="font-weight:400;font-size:11px;opacity:0.7;">(${heat.length} peserta)</span></div>
+    html += `<div class="heat-card" id="heatCard${hIdx}">
+      <div class="heat-title">Akhir ${hIdx+1} <span style="font-weight:400;font-size:11px;opacity:0.7;">(${heat.length} peserta)</span> <span id="heatSaveStatus${hIdx}" class="mono" style="font-size:11px;font-weight:400;color:var(--johor-blue);"></span></div>
       ${collisionWarning}
       ${heat.map((en,eIdx)=>`
         <div class="results-entry-row">
@@ -4962,6 +4962,10 @@ function renderHeatMode(){
           <select class="heat-move-select" data-heat="${hIdx}" data-idx="${eIdx}" title="Pindah ke Akhir lain">${moveOptions}</select>
         </div>`).join("")}
       <button class="btn btn-ghost btn-sm" style="margin-top:6px;" onclick="autoSortHeat(${hIdx})">Auto Susun Akhir ${hIdx+1}</button>
+      <button class="btn btn-primary btn-sm" style="margin-top:6px;background:#1a8f3c;border-color:#1a8f3c;" onclick="saveHeatResults(${hIdx})">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg>
+        Simpan Akhir ${hIdx+1}
+      </button>
     </div>`;
   });
 
@@ -5024,6 +5028,88 @@ function autoSortHeat(heatIdx){
   showToast("Akhir " + (heatIdx+1) + " disusun automatik.", "ok");
 }
 
+/* Simpan keputusan SATU Akhir sahaja — terus ke Google Sheet, TANPA
+   menghapuskan keputusan Akhir LAIN bagi acara yang sama yang telah
+   disimpan sebelum ini. Guru/Admin boleh isi & simpan Akhir demi
+   Akhir, tak perlu tunggu semua Akhir siap diisi dahulu. */
+async function saveHeatResults(heatIdx){
+  const ctx = currentResultsContext;
+  const heat = heatState.heats[heatIdx];
+  const filled = heat.filter(en => en.nilai !== null && en.nilai !== undefined && !isNaN(en.nilai));
+  if(filled.length === 0){
+    showToast("Sila isi sekurang-kurangnya satu keputusan dalam Akhir " + (heatIdx+1) + " dahulu.", "warn");
+    return;
+  }
+
+  // Susun & kira kedudukan/pingat DALAM Akhir ini sahaja.
+  const sorted = filled.slice().sort((a,b)=> ctx.isPadang ? (b.nilai-a.nilai) : (a.nilai-b.nilai));
+  sorted.forEach((en,idx)=>{
+    en.rank = idx+1;
+    en.pingat = idx===0 ? "Emas" : idx===1 ? "Perak" : idx===2 ? "Gangsa" : (idx===3 ? "Tempat Ke-4" : "");
+  });
+  const thisHeatKeys = new Set(heat.map(en=>en.entryKey));
+  const newEntries = sorted.map(en=>({ entryKey:en.entryKey, label:en.label, sekolah:en.sekolah, nilai:en.nilai, kedudukan:en.rank, pingat:en.pingat }));
+
+  const statusEl = document.getElementById("heatSaveStatus" + heatIdx);
+  if(statusEl) statusEl.textContent = "Menyimpan...";
+
+  const key = ctx.kategori + "||" + ctx.baseName + "||" + ctx.jantinaGroup;
+  // Asas gabungan: apa yang SUDAH ada dalam cache tempatan bagi acara ini
+  // (kekalkan Akhir lain), buang entri LAMA Akhir ini sahaja, tambah yang baharu.
+  const existingLocal = (resultsDataCache[key] || []).filter(r => !thisHeatKeys.has(r.entryKey));
+  let merged = existingLocal.concat(newEntries);
+
+  if(isGasConfigured()){
+    try{
+      // Tarik keputusan TERKINI dari Sheet supaya Akhir LAIN yang dah
+      // disimpan (mungkin oleh peranti/staff lain) tidak terhapus.
+      const res = await fetch(GAS_WEB_APP_URL + "?mode=results&_t=" + Date.now(), { method:"GET", cache:"no-store" });
+      const data = await res.json();
+      if(data && data.ok){
+        const existingForEvent = (data.results || [])
+          .filter(r => r.Kategori === ctx.kategori && r.Acara === ctx.baseName && (r.Jantina||"MIX") === ctx.jantinaGroup)
+          .filter(r => !thisHeatKeys.has(r.EntryKey)) // buang entri LAMA Akhir ini sahaja, kekalkan Akhir lain
+          .map(r => ({ entryKey:r.EntryKey, label:r.Label, sekolah:r.Sekolah, nilai:parseFloat(r.Nilai), kedudukan:parseInt(r.Kedudukan,10), pingat:r.Pingat }));
+        merged = existingForEvent.concat(newEntries);
+      }
+    }catch(err){ console.error("saveHeatResults fetch error:", err); }
+
+    const controller = new AbortController();
+    const timer = setTimeout(()=>controller.abort(), 12000);
+    try{
+      const res2 = await fetch(GAS_WEB_APP_URL, {
+        method:"POST",
+        headers:{ "Content-Type":"text/plain;charset=utf-8" },
+        signal: controller.signal,
+        body: JSON.stringify({ action:"saveResults", secret: API_SECRET, kategori: ctx.kategori, acara: ctx.baseName, jantina: ctx.jantinaGroup, entries: merged })
+      });
+      clearTimeout(timer);
+      const data2 = await res2.json();
+      if(data2 && data2.ok){
+        if(statusEl) statusEl.textContent = "\u2713 Disimpan";
+        showToast("Akhir " + (heatIdx+1) + " berjaya disimpan ke Google Sheet.", "ok");
+      } else {
+        throw new Error((data2 && data2.error) || "ralat tidak diketahui");
+      }
+    }catch(err){
+      clearTimeout(timer);
+      if(statusEl) statusEl.textContent = "\u26A0\uFE0F Gagal simpan";
+      showToast("Gagal simpan Akhir " + (heatIdx+1) + ": " + (err.message || err) + ". Data kekal di skrin, cuba lagi.", "danger");
+    }
+  } else {
+    if(statusEl) statusEl.textContent = "(mod tempatan)";
+  }
+
+  resultsDataCache[key] = merged.slice().sort((a,b)=>a.kedudukan-b.kedudukan);
+  persistResultsCacheLocal();
+  renderHeatMode();
+  renderResultsOutput(resultsDataCache[key], ctx.isPadang, ctx.baseName, ctx.kategori, ctx.jantinaGroup);
+  if(document.getElementById("medalTableSK")) renderMedalTable("medalTableSK", buildMedalTally("SK"), "SK");
+  if(document.getElementById("medalTableSM")) renderMedalTable("medalTableSM", buildMedalTally("SM"), "SM");
+  if(document.getElementById("medalTableSKStatistik")) renderMedalTable("medalTableSKStatistik", buildMedalTally("SK"), "SK");
+  if(document.getElementById("medalTableSMStatistik")) renderMedalTable("medalTableSMStatistik", buildMedalTally("SM"), "SM");
+}
+
 function confirmHeatAdvancers(){
   const advancers = [];
   heatState.heats.forEach(heat=>{
@@ -5048,13 +5134,38 @@ function confirmHeatAdvancers(){
    pilih dahulu. */
 async function navBarSaveResults(){
   const wrap = document.getElementById("resultsEntryWrap");
-  if(!wrap){
+  if(!wrap || !currentResultsContext){
     showToast("Sila pilih Kategori dan Acara dahulu di panel Keputusan.", "warn");
     return;
   }
+
+  // MOD AKHIR (heat) — cari SEMUA Akhir yang ada nilai diisi, simpan
+  // satu-satu (guna laluan gabung-selamat saveHeatResults sedia ada).
+  if(heatState && heatState.heats && heatState.heats.length){
+    let anyFilled = false;
+    let savedCount = 0;
+    for(let hIdx = 0; hIdx < heatState.heats.length; hIdx++){
+      const heat = heatState.heats[hIdx];
+      const hasValue = heat.some(en => en.nilai !== null && en.nilai !== undefined && !isNaN(en.nilai));
+      if(hasValue){
+        anyFilled = true;
+        await saveHeatResults(hIdx);
+        savedCount++;
+      }
+    }
+    if(!anyFilled){
+      document.getElementById("keputusanModulePanel").scrollIntoView({behavior:"smooth", block:"center"});
+      showToast("Sila isi sekurang-kurangnya satu keputusan dalam mana-mana Akhir dahulu.", "warn");
+      return;
+    }
+    showToast("Semua Akhir yang diisi (" + savedCount + ") telah disimpan.", "ok");
+    return;
+  }
+
+  // MOD BIASA (tanpa Akhir) — guna laluan simpan sedia ada.
   const inputs = [...wrap.querySelectorAll("input[data-entry-key]")];
   const hasAnyValue = inputs.some(inp=>inp.value.trim() !== "");
-  if(!currentResultsContext || inputs.length === 0){
+  if(inputs.length === 0){
     document.getElementById("keputusanModulePanel").scrollIntoView({behavior:"smooth", block:"center"});
     showToast("Sila pilih Kategori dan Acara dahulu, kemudian isi keputusan.", "warn");
     return;
