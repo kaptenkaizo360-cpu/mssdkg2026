@@ -1434,6 +1434,24 @@ body.printing-form #printFormArea{display:block !important;padding:24px;}
   </div>
 </div>
 
+<!-- ================= MODAL PILIH HARI — CETAK KEPUTUSAN KESELURUHAN ================= -->
+<div class="modal-overlay" id="printResultsDayModal">
+  <div class="modal-box" style="width:min(380px,94vw);text-align:center;">
+    <div class="modal-body" style="padding-top:8px;">
+      <h3 style="margin:0 0 6px;">Cetak Keputusan Keseluruhan</h3>
+      <p style="font-size:13px;color:var(--muted);margin:0 0 16px;">Senarai keputusan tersusun (Emas/Perak/Gangsa) berserta nama pemenang &amp; rekod pencapaian (masa/jarak). Pilih hari yang nak dicetak.</p>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <button class="btn btn-primary" onclick="closePrintResultsDayModal();printOverallResultsByDay(1);">Hari 1 &mdash; 22 Julai (Padang)</button>
+        <button class="btn btn-primary" onclick="closePrintResultsDayModal();printOverallResultsByDay(2);">Hari 2 &mdash; 23 Julai (Balapan &amp; Berpasukan)</button>
+        <button class="btn btn-ghost" onclick="closePrintResultsDayModal();printOverallResultsByDay(0);">Kedua-dua Hari (Semua Keputusan)</button>
+      </div>
+    </div>
+    <div class="modal-foot" style="justify-content:center;">
+      <button class="btn btn-ghost btn-sm" onclick="closePrintResultsDayModal()">Batal</button>
+    </div>
+  </div>
+</div>
+
 <!-- ================= MODAL PENDAFTARAN TERKUNCI (Pengurus) ================= -->
 <div class="modal-overlay" id="pengurusLockedModal">
   <div class="modal-box" style="width:min(420px,94vw);text-align:center;">
@@ -2020,6 +2038,10 @@ body.printing-form #printFormArea{display:block !important;padding:24px;}
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8"/><path d="M12 17v4"/><path d="M7 4h10v5a5 5 0 0 1-10 0V4z"/><path d="M17 4h3a2 2 0 0 1 2 2 4 4 0 0 1-4 4"/><path d="M7 4H4a2 2 0 0 0-2 2 4 4 0 0 0 4 4"/></svg>
         Keputusan Keseluruhan
       </button>
+      <button class="btn btn-ghost btn-sm" style="color:#fff;border-color:rgba(255,255,255,0.4);" onclick="openPrintResultsDayModal()" title="Cetak Keputusan Keseluruhan (tersusun) — pilih Hari">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/></svg>
+        Cetak Keputusan Keseluruhan
+      </button>
       <button class="btn btn-ghost btn-sm" style="color:#fff;border-color:rgba(255,255,255,0.4);" onclick="openIndividuDashboardPage()" title="Dashboard Start List Acara Individu">
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a8 8 0 0 1 16 0v1"/></svg>
         Start List Individu
@@ -2467,7 +2489,7 @@ function formatLockoutRemaining(ms){
    2. Extensions > Apps Script > tampal kandungan fail Code.gs yang disertakan.
    3. Deploy > New deployment > Web app > Execute as: Me > Who has access: Anyone.
    4. Salin URL Web App yang dijana, gantikan nilai di bawah. */
-const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzsd8aC7zwjvz8IvlxFSInX3clxLK2GkJ5czhMoBE6VpDz8CPGLe1t5B0v4aWDvJJNIog/exec";
+const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwi1h7wi929z4-z4yEECyiVXY4CiMZmRjWuRVzxDyHwTgCzvBZNeUEpINkHUne4lwH0fw/exec";
 
 /* Kunci rahsia API — MESTI SAMA PERSIS dengan API_SECRET dalam Code.gs.
    Ini disertakan pada setiap permintaan simpan/padam/reset supaya
@@ -4739,6 +4761,13 @@ function printAturCara(){
    acara yang melebihi had 8 (guna mod Akhir) kini dipecah & dilabel
    "Akhir 1", "Akhir 2" dst. dalam cetakan supaya senang pengelola
    susun peserta ikut giliran sebenar. */
+function openPrintResultsDayModal(){
+  document.getElementById("printResultsDayModal").classList.add("show");
+}
+function closePrintResultsDayModal(){
+  document.getElementById("printResultsDayModal").classList.remove("show");
+}
+
 function openPrintStartListDayModal(){
   document.getElementById("printDayModal").classList.add("show");
 }
@@ -5540,9 +5569,10 @@ function printOverallResultsByDay(dayFilter){
     const type = (jantina === "MIX") ? "KUM" : "IND";
     const day = getEventDay(kategori, type, acara);
     if(dayFilter !== 0 && day !== dayFilter) return;
+    const isPadangEvent = PADANG_EVENTS.includes(acara);
     const entries = (resultsDataCache[key] || []).filter(r=>r.kedudukan >= 1 && r.kedudukan <= 3).sort((a,b)=>a.kedudukan-b.kedudukan);
     if(entries.length === 0) return;
-    rows.push({ kategori, acara, jantina, type, day, meta, entries, catIdx: catOrderPrint.indexOf(kategori) });
+    rows.push({ kategori, acara, jantina, type, day, meta, entries, isPadang: isPadangEvent, catIdx: catOrderPrint.indexOf(kategori) });
   });
 
   if(rows.length === 0){
@@ -5569,12 +5599,13 @@ function printOverallResultsByDay(dayFilter){
       html += `<h3 style="font-family:'Oswald',sans-serif;text-transform:uppercase;border-bottom:2px solid #000;padding-bottom:6px;margin-top:26px;">Hari ${row.day} \u2014 ${row.day===1 ? "22 Julai" : "23 Julai"}</h3>`;
     }
     const jantinaLabel = row.type === "KUM" ? "Berpasukan" : (row.jantina === "L" ? "Lelaki" : "Perempuan");
+    const recordUnit = row.isPadang ? "m" : "s";
     html += `<div style="margin-top:14px;">
       <div style="font-weight:700;font-family:'Oswald',sans-serif;font-size:14px;">${escapeHtml(row.acara)} \u2014 ${escapeHtml(row.meta.label)} (${jantinaLabel})</div>
       <table class="print-form-table" style="margin-top:4px;">
-        <thead><tr><th style="width:70px;">Kedudukan</th><th>Nama${row.type==="KUM" ? " Pasukan" : ""}</th><th>Sekolah</th></tr></thead>
+        <thead><tr><th style="width:70px;">Kedudukan</th><th>Nama${row.type==="KUM" ? " Pasukan" : ""}</th><th>Sekolah</th><th style="width:90px;">Rekod</th></tr></thead>
         <tbody>
-          ${row.entries.map(en=>`<tr><td>${medalIcon[en.pingat]||""} ${escapeHtml(en.pingat||("#"+en.kedudukan))}</td><td><b>${escapeHtml(en.label)}</b></td><td>${escapeHtml(en.sekolah)}</td></tr>`).join("")}
+          ${row.entries.map(en=>`<tr><td>${medalIcon[en.pingat]||""} ${escapeHtml(en.pingat||("#"+en.kedudukan))}</td><td><b>${escapeHtml(en.label)}</b></td><td>${escapeHtml(en.sekolah)}</td><td class="mono">${en.nilai!=null && !isNaN(en.nilai) ? en.nilai+recordUnit : "-"}</td></tr>`).join("")}
         </tbody>
       </table>
     </div>`;
