@@ -1773,11 +1773,22 @@ body.printing-form #printFormArea{display:block !important;padding:24px;}
 
         <div class="grid-2">
           <div>
+            <label for="resultsHari">Hari</label>
+            <select id="resultsHari" onchange="onResultsKategoriChange()">
+              <option value="">-- Semua Hari --</option>
+              <option value="1">Hari 1 (22 Julai) — Acara Padang</option>
+              <option value="2">Hari 2 (23 Julai) — Acara Balapan &amp; Berpasukan</option>
+            </select>
+          </div>
+          <div>
             <label for="resultsKategori">Kategori</label>
             <select id="resultsKategori" onchange="onResultsKategoriChange()">
               <option value="">-- Pilih Kategori --</option>
             </select>
           </div>
+        </div>
+        <div class="grid-2">
+          <div></div>
           <div id="resultsJantinaWrap">
             <label for="resultsJantina">Jantina</label>
             <select id="resultsJantina" onchange="onResultsAcaraChange()">
@@ -1974,6 +1985,10 @@ body.printing-form #printFormArea{display:block !important;padding:24px;}
       <button class="btn btn-primary btn-sm" id="btnNavSaveResultsStatistik" style="background:#1a8f3c;border-color:#1a8f3c;" onclick="navBarSaveResults()" title="Simpan keputusan yang telah diisi">
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg>
         Simpan Keputusan
+      </button>
+      <button class="btn btn-ghost btn-sm" style="color:#fff;border-color:rgba(255,255,255,0.4);" onclick="openStandingsPage()" title="Keputusan Keseluruhan &amp; Kedudukan Pingat — untuk Majlis Penyampaian Hadiah">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8"/><path d="M12 17v4"/><path d="M7 4h10v5a5 5 0 0 1-10 0V4z"/><path d="M17 4h3a2 2 0 0 1 2 2 4 4 0 0 1-4 4"/><path d="M7 4H4a2 2 0 0 0-2 2 4 4 0 0 0 4 4"/></svg>
+        Keputusan Keseluruhan
       </button>
       <button class="btn btn-ghost btn-sm" style="color:#fff;border-color:rgba(255,255,255,0.4);" onclick="openIndividuDashboardPage()" title="Dashboard Start List Acara Individu">
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a8 8 0 0 1 16 0v1"/></svg>
@@ -2418,7 +2433,7 @@ function formatLockoutRemaining(ms){
    2. Extensions > Apps Script > tampal kandungan fail Code.gs yang disertakan.
    3. Deploy > New deployment > Web app > Execute as: Me > Who has access: Anyone.
    4. Salin URL Web App yang dijana, gantikan nilai di bawah. */
-const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxW7e4OI78MKKaYT4nPNp3HuBW_psFae_Vyoh4VYHec-e-c-VleI4xHeo2HqjFItfxZjw/exec";
+const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyJmihWwVsnu07GHWVAm9NPJY72S443sXmoQCmdDm5H_hL8rtPORsBeITarsZpzwOLZPQ/exec";
 
 /* Kunci rahsia API — MESTI SAMA PERSIS dengan API_SECRET dalam Code.gs.
    Ini disertakan pada setiap permintaan simpan/padam/reset supaya
@@ -4208,6 +4223,7 @@ function selectResultsCategory(kategori){
 
 function onResultsKategoriChange(){
   const kategori = document.getElementById("resultsKategori").value;
+  const hariFilter = document.getElementById("resultsHari").value; // "", "1", or "2"
   const sel = document.getElementById("resultsAcara");
   sel.innerHTML = '<option value="">-- Pilih Acara --</option>';
   document.getElementById("resultsEntryWrap").innerHTML = "";
@@ -4219,30 +4235,41 @@ function onResultsKategoriChange(){
 
   const evConf = EVENTS_BY_CATEGORY[kategori];
 
-  const indivGroup = document.createElement("optgroup");
-  indivGroup.label = "Acara Individu";
-  evConf.individu.forEach(evName=>{
-    const opt = document.createElement("option");
-    opt.value = "IND|" + evName;
-    opt.textContent = evName + (PADANG_EVENTS.includes(evName) ? " (Padang)" : " (Balapan)");
-    indivGroup.appendChild(opt);
-  });
-  sel.appendChild(indivGroup);
+  const indivEvents = evConf.individu.filter(evName => !hariFilter || getEventDay(kategori, "IND", evName) === parseInt(hariFilter,10));
+  if(indivEvents.length){
+    const indivGroup = document.createElement("optgroup");
+    indivGroup.label = "Acara Individu";
+    indivEvents.forEach(evName=>{
+      const opt = document.createElement("option");
+      opt.value = "IND|" + evName;
+      opt.textContent = evName + (PADANG_EVENTS.includes(evName) ? " (Padang)" : " (Balapan)");
+      indivGroup.appendChild(opt);
+    });
+    sel.appendChild(indivGroup);
+  }
 
   const kumBaseNames = evConf.kumpulan.slice();
   if(SHARED_4X50_CATEGORIES.includes(kategori)) kumBaseNames.unshift(SHARED_4X50_EVENT);
   const openEvent2 = getOpenKumpulanEventFor(kategori);
   if(openEvent2) kumBaseNames.push(openEvent2);
-  if(kumBaseNames.length){
+  const kumEventsFiltered = kumBaseNames.filter(() => !hariFilter || hariFilter === "2"); // acara berkumpulan sentiasa Hari 2
+  if(kumEventsFiltered.length){
     const kumGroup = document.createElement("optgroup");
     kumGroup.label = "Acara Berkumpulan (Berpasukan)";
-    kumBaseNames.forEach(baseName=>{
+    kumEventsFiltered.forEach(baseName=>{
       const opt = document.createElement("option");
       opt.value = "KUM|" + baseName;
       opt.textContent = baseName + " (Balapan)";
       kumGroup.appendChild(opt);
     });
     sel.appendChild(kumGroup);
+  }
+
+  if(hariFilter && sel.querySelectorAll("option").length <= 1){
+    const note = document.createElement("option");
+    note.disabled = true;
+    note.textContent = "(Tiada acara kategori ini pada Hari " + hariFilter + ")";
+    sel.appendChild(note);
   }
 }
 
@@ -5343,6 +5370,27 @@ function buildAthleteStats(peringkat, jantina){
    Disusun mengikut masa tentatif, terus terbit daripada struktur acara
    sebenar (EVENTS_BY_CATEGORY) supaya sentiasa tepat jika acara berubah.
    ========================================================= */
+/* Tentukan Hari (1 atau 2) bagi SATU acara — guna peraturan SAMA seperti
+   buildEventScheduleItems (padang=Hari1, balapan=Hari2, kecuali
+   pengecualian FORCE_DAY1), supaya konsisten dengan Atur Cara sebenar.
+   Fungsi ini HANYA untuk PAPARAN/PENAPISAN — tidak mengubah sebarang
+   data peserta atau keputusan yang tersimpan. */
+function getEventDay(kategori, type, acara){
+  if(type === "KUM") return 2; // semua acara berpasukan di Hari 2
+  if(PADANG_EVENTS.includes(acara)) return 1; // acara padang di Hari 1
+  // Acara balapan lazimnya Hari 2, KECUALI disenaraikan FORCE_DAY1 (Hari 1)
+  const FORCE_DAY1 = [
+    { kategori:"B12", jantina:"L", acara:"200M" },
+    { kategori:"B12", jantina:"P", acara:"200M" },
+    { kategori:"B19", jantina:"P", acara:"200M" },
+    { kategori:"B19", jantina:"L", acara:"200M" },
+    { kategori:"B15", jantina:"P", acara:"200M" },
+    { kategori:"B15", jantina:"L", acara:"200M" }
+  ];
+  const isForced = FORCE_DAY1.some(f=>f.kategori===kategori && f.acara===acara);
+  return isForced ? 1 : 2;
+}
+
 function buildEventScheduleItems(){
   const padangItems = [];
   const trekItems = [];
@@ -5352,7 +5400,6 @@ function buildEventScheduleItems(){
   /* Pengecualian khas — acara balapan ini dipindah ke Hari 1 (bersama acara
      padang) atas permintaan, walaupun ia acara balapan/individu. */
   const FORCE_DAY1 = [
-    { kategori:"B19", jantina:"P", acara:"100M" },
     { kategori:"B12", jantina:"L", acara:"200M" },
     { kategori:"B12", jantina:"P", acara:"200M" },
     { kategori:"B19", jantina:"P", acara:"200M" },
@@ -5509,8 +5556,15 @@ function renderEventSchedule(idSuffix){
   h2.innerHTML = renderList(day2, "d2");
 }
 
+let standingsReturnPage = "loginScreen";
 function openStandingsPage(){
-  document.getElementById("loginScreen").style.display = "none";
+  ["loginScreen","schedulePage","standingsPage","statsPage","app","adminApp","statistikApp"].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el && getComputedStyle(el).display !== "none") standingsReturnPage = id;
+  });
+  document.querySelectorAll("#loginScreen, #schedulePage, #standingsPage, #statsPage, #app, #adminApp, #statistikApp").forEach(el=>{
+    if(el.id !== "standingsPage") el.style.display = "none";
+  });
   document.getElementById("standingsPage").style.display = "block";
   window.scrollTo({top:0, behavior:"instant"});
   renderMedalTable("medalTableSK", buildMedalTally("SK"), "SK");
@@ -5598,7 +5652,9 @@ function closeKumpulanDashboardPage(){
 
 function closeStandingsPage(){
   document.getElementById("standingsPage").style.display = "none";
-  document.getElementById("loginScreen").style.display = "flex";
+  const back = standingsReturnPage || "loginScreen";
+  const el = document.getElementById(back);
+  if(el) el.style.display = (back === "loginScreen") ? "flex" : "block";
   window.scrollTo({top:0, behavior:"instant"});
 }
 
