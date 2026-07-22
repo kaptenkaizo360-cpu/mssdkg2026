@@ -2059,7 +2059,11 @@ body.printing-form #printFormArea{display:block !important;padding:24px;}
     <div class="panel no-print" style="border-color:var(--johor-blue);">
       <div class="panel-head">
         <h2 style="color:var(--johor-blue);">Semua Borang Hakim &amp; Senarai Nama</h2>
-        <button class="btn btn-ghost btn-sm no-print" onclick="renderAllFormsList()">Muat Semula</button>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button class="btn btn-ghost btn-sm no-print" style="border-color:var(--johor-blue);color:var(--johor-blue);" onclick="printAllJudgeFormsByDay(1)" title="Cetak semua Borang Hakim — Hari 1 (22 Julai) sahaja">\u{1F5A8}\uFE0F Cetak Semua Borang \u2014 Hari 1</button>
+          <button class="btn btn-ghost btn-sm no-print" style="border-color:var(--johor-blue);color:var(--johor-blue);" onclick="printAllJudgeFormsByDay(2)" title="Cetak semua Borang Hakim — Hari 2 (23 Julai) sahaja">\u{1F5A8}\uFE0F Cetak Semua Borang \u2014 Hari 2</button>
+          <button class="btn btn-ghost btn-sm no-print" onclick="renderAllFormsList()">Muat Semula</button>
+        </div>
       </div>
       <div class="panel-body">
         <div class="field-note" style="margin-bottom:12px;">
@@ -2463,7 +2467,7 @@ function formatLockoutRemaining(ms){
    2. Extensions > Apps Script > tampal kandungan fail Code.gs yang disertakan.
    3. Deploy > New deployment > Web app > Execute as: Me > Who has access: Anyone.
    4. Salin URL Web App yang dijana, gantikan nilai di bawah. */
-const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzueSREf4nCknx1ToxQtqQPaxI3b095q6LDnlPOBNgZoVCgoaiab6lOk5cP4SbLJqztvQ/exec";
+const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzsd8aC7zwjvz8IvlxFSInX3clxLK2GkJ5czhMoBE6VpDz8CPGLe1t5B0v4aWDvJJNIog/exec";
 
 /* Kunci rahsia API — MESTI SAMA PERSIS dengan API_SECRET dalam Code.gs.
    Ini disertakan pada setiap permintaan simpan/padam/reset supaya
@@ -4861,12 +4865,11 @@ function getHeatGroupsForPrint(ctx){
   return distributeEntriesToHeats(ctx.entries, numHeats).map(h=>h.map(en=>({label:en.label, sekolah:en.sekolah, noPeserta:en.noPeserta, athletes:en.athletes})));
 }
 
-function generatePrintForm(type){
-  const ctx = currentResultsContext;
-  if(!ctx || !ctx.entries.length){
-    showToast("Tiada peserta untuk dicetak.", "warn");
-    return;
-  }
+/* Bina HTML SATU borang hakim (tajuk + jadual + ruang tandatangan) untuk
+   SATU acara — dikongsi oleh generatePrintForm (satu acara) dan
+   printAllJudgeFormsByDay (pukal ikut Hari), supaya kedua-dua laluan
+   guna format yang SAMA. TIDAK mencetak terus — cuma pulangkan HTML. */
+function buildJudgeFormHtml(ctx, type){
   const meta = PRINT_FORM_META[type];
   const jantinaLabel = ctx.jantinaGroup === "MIX" ? "Berpasukan (Campuran)" : (ctx.jantinaGroup === "L" ? "Lelaki" : "Perempuan");
   const kategoriLabel = CATEGORY_META[ctx.kategori].label;
@@ -4898,7 +4901,7 @@ function generatePrintForm(type){
     ? heatGroups.map((group,idx)=>buildTable(group, "Akhir " + (idx+1))).join("")
     : buildTable(ctx.entries, null);
 
-  const html = `
+  return `
     <div class="print-form-header">
       <h2>${meta.title}</h2>
       <div class="print-form-meta">
@@ -4913,8 +4916,82 @@ function generatePrintForm(type){
       <div>Tandatangan Hakim/Pegawai: _______________________</div>
       <div>Nama: _______________________</div>
     </div>`;
+}
 
+function generatePrintForm(type){
+  const ctx = currentResultsContext;
+  if(!ctx || !ctx.entries.length){
+    showToast("Tiada peserta untuk dicetak.", "warn");
+    return;
+  }
+  const html = buildJudgeFormHtml(ctx, type);
   document.getElementById("printFormArea").innerHTML = html;
+  document.body.classList.add("printing-form");
+  window.print();
+  setTimeout(()=>{ document.body.classList.remove("printing-form"); }, 500);
+}
+
+/* Cetak SEMUA Borang Hakim bagi SATU Hari (1, 2) sekali gus — satu
+   dokumen besar, satu borang setiap acara, dipisahkan dengan pemisah
+   halaman (page-break) supaya senang cetak/edar terus kepada hakim
+   mengikut hari tugasan mereka. */
+function printAllJudgeFormsByDay(dayFilter){
+  const items = [];
+  const renderedMultiCatItems = new Set();
+  Object.keys(CATEGORY_META).forEach(kat=>{
+    const conf = EVENTS_BY_CATEGORY[kat];
+    if(!conf) return;
+    conf.individu.forEach(ev=>{
+      ["L","P"].forEach(jantina=>{
+        const entries = getResultEntries(kat, "IND", ev, jantina);
+        if(entries.length === 0) return;
+        items.push({ kategori:kat, type:"IND", acara:ev, jantina, entries, isPadang:PADANG_EVENTS.includes(ev) });
+      });
+    });
+    let kumList = conf.kumpulan.slice();
+    if(SHARED_4X50_CATEGORIES.includes(kat) && !kumList.includes(SHARED_4X50_EVENT)) kumList.unshift(SHARED_4X50_EVENT);
+    const openEventForKat = getOpenKumpulanEventFor(kat);
+    if(openEventForKat) kumList.push(openEventForKat);
+    kumList.forEach(ev=>{
+      const isMultiCat = (ev === SHARED_4X50_EVENT || ev === OPEN_KUMPULAN_RENDAH_EVENT || ev === OPEN_KUMPULAN_MENENGAH_EVENT);
+      if(isMultiCat){
+        if(renderedMultiCatItems.has(ev)) return;
+        renderedMultiCatItems.add(ev);
+      }
+      const entries = getResultEntries(kat, "KUM", ev, "");
+      if(entries.length === 0) return;
+      items.push({ kategori:kat, type:"KUM", acara:ev, jantina:"MIX", entries, isPadang:false });
+    });
+  });
+
+  const matching = items.filter(it => getEventDay(it.kategori, it.type, it.acara) === dayFilter);
+  if(matching.length === 0){
+    showToast("Tiada peserta/pasukan berdaftar untuk mana-mana acara pada Hari " + dayFilter + " lagi.", "warn");
+    return;
+  }
+
+  const fieldFormMap = { "L/Peluru":"peluru", "R/Lembing":"lembing", "L/Jauh":"jauh", "L/Cakera":"cakera" };
+  let bodyHtml = "";
+  matching.forEach((it, idx)=>{
+    const jantinaGroup = it.type === "IND" ? it.jantina : "MIX";
+    const ctx = { kategori:it.kategori, type:it.type, baseName:it.acara, isPadang:it.isPadang, entries:it.entries, jantinaGroup };
+    let formType = "penamat";
+    if(it.type === "IND" && it.isPadang) formType = fieldFormMap[it.acara] || "nama";
+    bodyHtml += `<div style="${idx>0?'page-break-before:always;':''}">${buildJudgeFormHtml(ctx, formType)}</div>`;
+  });
+
+  const fullHtml = `
+    <div class="print-form-header">
+      <h2>SEMUA BORANG HAKIM \u2014 HARI ${dayFilter}</h2>
+      <div class="print-form-meta">
+        <div><b>Kejohanan Olahraga Pendidikan Khas MSSD Kluang 2026</b></div>
+        <div>${dayFilter===1 ? "Rabu, 22 Julai 2026" : "Khamis, 23 Julai 2026"} &middot; ${matching.length} borang</div>
+      </div>
+    </div>
+    ${bodyHtml}
+  `;
+
+  document.getElementById("printFormArea").innerHTML = fullHtml;
   document.body.classList.add("printing-form");
   window.print();
   setTimeout(()=>{ document.body.classList.remove("printing-form"); }, 500);
