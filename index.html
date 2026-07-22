@@ -1287,6 +1287,18 @@ body.printing-form #printFormArea{display:block !important;padding:24px;}
       </div>
     </div>
     <div class="header-actions">
+      <button class="btn btn-ghost btn-sm" style="color:#fff;border-color:rgba(255,255,255,0.4);" onclick="printOverallResultsByDay(1)" title="Cetak keputusan &amp; nama pemenang — Hari 1 sahaja">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/></svg>
+        Cetak Hari 1
+      </button>
+      <button class="btn btn-ghost btn-sm" style="color:#fff;border-color:rgba(255,255,255,0.4);" onclick="printOverallResultsByDay(2)" title="Cetak keputusan &amp; nama pemenang — Hari 2 sahaja">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/></svg>
+        Cetak Hari 2
+      </button>
+      <button class="btn btn-ghost btn-sm" style="color:#fff;border-color:rgba(255,255,255,0.4);" onclick="printOverallResultsByDay(0)" title="Cetak keputusan &amp; nama pemenang — Semua Hari">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/></svg>
+        Cetak Semua
+      </button>
       <button class="btn btn-ghost btn-sm" style="color:#fff;border-color:rgba(255,255,255,0.4);" onclick="closeStandingsPage()">
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
         Kembali
@@ -1402,6 +1414,24 @@ body.printing-form #printFormArea{display:block !important;padding:24px;}
   </div>
 
   <footer class="app-footer no-print">Statistik Penyertaan &middot; MSSD Kluang</footer>
+</div>
+
+<!-- ================= MODAL PILIH HARI — CETAK START LIST ================= -->
+<div class="modal-overlay" id="printDayModal">
+  <div class="modal-box" style="width:min(380px,94vw);text-align:center;">
+    <div class="modal-body" style="padding-top:8px;">
+      <h3 style="margin:0 0 6px;">Cetak Start List</h3>
+      <p style="font-size:13px;color:var(--muted);margin:0 0 16px;">Pilih hari yang nak dicetak. Acara yang melebihi 8 peserta/pasukan akan dilabel ikut Akhir (Akhir 1, Akhir 2, dst.) secara automatik.</p>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <button class="btn btn-primary" onclick="closePrintDayModal();printFullStartList(1);">Hari 1 &mdash; 22 Julai (Padang)</button>
+        <button class="btn btn-primary" onclick="closePrintDayModal();printFullStartList(2);">Hari 2 &mdash; 23 Julai (Balapan &amp; Berpasukan)</button>
+        <button class="btn btn-ghost" onclick="closePrintDayModal();printFullStartList(0);">Kedua-dua Hari (Semua Acara)</button>
+      </div>
+    </div>
+    <div class="modal-foot" style="justify-content:center;">
+      <button class="btn btn-ghost btn-sm" onclick="closePrintDayModal()">Batal</button>
+    </div>
+  </div>
 </div>
 
 <!-- ================= MODAL PENDAFTARAN TERKUNCI (Pengurus) ================= -->
@@ -1716,7 +1746,7 @@ body.printing-form #printFormArea{display:block !important;padding:24px;}
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
         Muat Semula
       </button>
-      <button class="btn btn-ghost btn-sm" style="color:#fff;border-color:rgba(255,255,255,0.4);" onclick="printFullStartList()" title="Cetak Senarai Penuh Start List — Semua Acara">
+      <button class="btn btn-ghost btn-sm" style="color:#fff;border-color:rgba(255,255,255,0.4);" onclick="openPrintStartListDayModal()" title="Cetak Senarai Penuh Start List — pilih Hari">
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/></svg>
         Cetak Semua Start List
       </button>
@@ -2006,7 +2036,7 @@ body.printing-form #printFormArea{display:block !important;padding:24px;}
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
         Muat Semula
       </button>
-      <button class="btn btn-ghost btn-sm" style="color:#fff;border-color:rgba(255,255,255,0.4);" onclick="printFullStartList()" title="Cetak Senarai Penuh Start List — Semua Acara">
+      <button class="btn btn-ghost btn-sm" style="color:#fff;border-color:rgba(255,255,255,0.4);" onclick="openPrintStartListDayModal()" title="Cetak Senarai Penuh Start List — pilih Hari">
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/></svg>
         Cetak Semua Start List
       </button>
@@ -2433,7 +2463,7 @@ function formatLockoutRemaining(ms){
    2. Extensions > Apps Script > tampal kandungan fail Code.gs yang disertakan.
    3. Deploy > New deployment > Web app > Execute as: Me > Who has access: Anyone.
    4. Salin URL Web App yang dijana, gantikan nilai di bawah. */
-const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyJmihWwVsnu07GHWVAm9NPJY72S443sXmoQCmdDm5H_hL8rtPORsBeITarsZpzwOLZPQ/exec";
+const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzueSREf4nCknx1ToxQtqQPaxI3b095q6LDnlPOBNgZoVCgoaiab6lOk5cP4SbLJqztvQ/exec";
 
 /* Kunci rahsia API — MESTI SAMA PERSIS dengan API_SECRET dalam Code.gs.
    Ini disertakan pada setiap permintaan simpan/padam/reset supaya
@@ -4526,8 +4556,8 @@ function renderKumpulanDashboard(){
                     ${[1,2,3,4].map(n=>`<option value="${n}" ${a.giliran===n?"selected":""}>Pelari ${n}</option>`).join("")}
                   </select>`
                 : (a.giliran ? ` <span class="giliran-badge">Pelari ${a.giliran}</span>` : "");
-              return `<span class="no-print">${ai+1}. ${escapeHtml(a.nama)}${bibPart}${giliranPart}</span><span class="print-only">${escapeHtml(a.noPeserta||"-")}</span>`;
-            }).join('<span class="no-print"><br></span><span class="print-only">, </span>');
+              return `<span>${ai+1}. ${escapeHtml(a.nama)}${bibPart}${giliranPart}</span>`;
+            }).join('<br>');
             return `<tr><td>${i+1}</td><td><b>${escapeHtml(en.label)}</b></td><td>${escapeHtml(en.sekolah)}</td><td>${athletes}</td></tr>`;
           }).join("") +
           `</tbody></table>`;
@@ -4701,7 +4731,19 @@ function printAturCara(){
   setTimeout(()=>{ document.body.classList.remove("printing-form"); }, 500);
 }
 
-function printFullStartList(){
+/* Cetak Start List — boleh tapis ikut Hari (1, 2, atau 0=Semua), dan
+   acara yang melebihi had 8 (guna mod Akhir) kini dipecah & dilabel
+   "Akhir 1", "Akhir 2" dst. dalam cetakan supaya senang pengelola
+   susun peserta ikut giliran sebenar. */
+function openPrintStartListDayModal(){
+  document.getElementById("printDayModal").classList.add("show");
+}
+function closePrintDayModal(){
+  document.getElementById("printDayModal").classList.remove("show");
+}
+
+function printFullStartList(dayFilter){
+  dayFilter = dayFilter || 0;
   const { padangItems, trekItems } = buildEventScheduleItems();
   const DAY_START = 8*60, DAY_END = 12*60;
   const day1 = assignScheduleTimes(padangItems, DAY_START, DAY_END);
@@ -4717,30 +4759,44 @@ function printFullStartList(){
         <div style="font-family:'Oswald',sans-serif;font-weight:700;font-size:13px;text-transform:uppercase;">${row.time} &mdash; ${escapeHtml(row.acara)} &mdash; ${escapeHtml(row.katLabel)}</div>`;
       const isPadangEvent = row.type === "IND" && PADANG_EVENTS.includes(row.acara);
       const noColLabel = isPadangEvent ? "No." : "No. Lorong";
-      if(row.type === "IND"){
-        html += `<table class="print-form-table"><thead><tr><th>${noColLabel}</th><th>No. Peserta</th><th>Nama</th><th>Sekolah</th></tr></thead><tbody>` +
-          entries.map((en,i)=>`<tr><td>${i+1}</td><td>${escapeHtml(en.noPeserta||"-")}</td><td>${escapeHtml(en.label)}</td><td>${escapeHtml(en.sekolah)}</td></tr>`).join("") +
-          `</tbody></table>`;
-      } else {
-        html += `<table class="print-form-table"><thead><tr><th>No. Lorong</th><th>Pasukan</th><th>Sekolah</th><th>No. Badan Ahli Pasukan</th></tr></thead><tbody>` +
-          entries.map((en,i)=>{
-            const bibNumbers = (en.athletes||[]).map(a=>escapeHtml(a.noPeserta||"-")).join(", ");
-            return `<tr><td>${i+1}</td><td>${escapeHtml(en.label)}</td><td>${escapeHtml(en.sekolah)}</td><td>${bibNumbers}</td></tr>`;
-          }).join("") +
-          `</tbody></table>`;
-      }
+
+      const useHeats = shouldUseHeats(entries, row.type, row.acara);
+      const groups = useHeats
+        ? distributeEntriesToHeats(entries, Math.ceil(entries.length / HEAT_SIZE))
+        : [entries];
+
+      groups.forEach((group, gi)=>{
+        if(useHeats){
+          html += `<div style="font-weight:700;font-size:11.5px;margin:6px 0 2px;color:var(--johor-blue);">Akhir ${gi+1}</div>`;
+        }
+        if(row.type === "IND"){
+          html += `<table class="print-form-table"><thead><tr><th>${noColLabel}</th><th>No. Peserta</th><th>Nama</th><th>Sekolah</th></tr></thead><tbody>` +
+            group.map((en,i)=>`<tr><td>${i+1}</td><td>${escapeHtml(en.noPeserta||"-")}</td><td>${escapeHtml(en.label)}</td><td>${escapeHtml(en.sekolah)}</td></tr>`).join("") +
+            `</tbody></table>`;
+        } else {
+          html += `<table class="print-form-table"><thead><tr><th>No. Lorong</th><th>Pasukan</th><th>Sekolah</th><th>Ahli Pasukan (Nama &amp; No. Badan)</th></tr></thead><tbody>` +
+            group.map((en,i)=>{
+              const athleteList = (en.athletes||[]).map((a,ai)=>`${ai+1}. ${escapeHtml(a.nama)} (No. ${escapeHtml(a.noPeserta||"-")})`).join("<br>");
+              return `<tr><td>${i+1}</td><td>${escapeHtml(en.label)}</td><td>${escapeHtml(en.sekolah)}</td><td>${athleteList}</td></tr>`;
+            }).join("") +
+            `</tbody></table>`;
+        }
+      });
       html += `</div>`;
     });
     return html;
   }
 
+  let sectionsHtml = "";
+  if(dayFilter === 0 || dayFilter === 1) sectionsHtml += buildDaySection("Hari 1 \u2014 Rabu, 22 Julai 2026 (Acara Padang)", day1);
+  if(dayFilter === 0 || dayFilter === 2) sectionsHtml += buildDaySection("Hari 2 \u2014 Khamis, 23 Julai 2026 (Acara Balapan &amp; Berpasukan)", day2);
+
   const fullHtml = `
     <div class="print-form-header">
-      <h2>SENARAI PENUH START LIST &mdash; SEMUA ACARA</h2>
+      <h2>SENARAI PENUH START LIST ${dayFilter===0 ? "&mdash; SEMUA ACARA" : dayFilter===1 ? "&mdash; HARI 1 SAHAJA" : "&mdash; HARI 2 SAHAJA"}</h2>
       <div class="print-form-meta"><div>Kejohanan Olahraga Pendidikan Khas MSSD Kluang 2026</div></div>
     </div>
-    ${buildDaySection("Hari 1 \u2014 Rabu, 22 Julai 2026 (Acara Padang)", day1)}
-    ${buildDaySection("Hari 2 \u2014 Khamis, 23 Julai 2026 (Acara Balapan &amp; Berpasukan)", day2)}
+    ${sectionsHtml}
   `;
 
   document.getElementById("printFormArea").innerHTML = fullHtml;
@@ -5389,6 +5445,68 @@ function getEventDay(kategori, type, acara){
   ];
   const isForced = FORCE_DAY1.some(f=>f.kategori===kategori && f.acara===acara);
   return isForced ? 1 : 2;
+}
+
+/* Cetak KEPUTUSAN KESELURUHAN berserta NAMA pemenang (Emas/Perak/Gangsa)
+   bagi setiap acara yang telah disimpan keputusannya — boleh ditapis
+   ikut Hari (1, 2, atau 0=Semua). Guna resultsDataCache sedia ada,
+   TIDAK mengubah sebarang data — cuma papar/susun untuk cetakan. */
+function printOverallResultsByDay(dayFilter){
+  const catOrderPrint = ["B8","B10","B12","B15","B19","SD_SR","SD_SM","PRA"];
+  const rows = [];
+
+  Object.keys(resultsDataCache).forEach(key=>{
+    const parts = key.split("||");
+    const kategori = parts[0], acara = parts[1], jantina = parts[2];
+    const meta = CATEGORY_META[kategori];
+    if(!meta) return;
+    const type = (jantina === "MIX") ? "KUM" : "IND";
+    const day = getEventDay(kategori, type, acara);
+    if(dayFilter !== 0 && day !== dayFilter) return;
+    const entries = (resultsDataCache[key] || []).filter(r=>r.kedudukan >= 1 && r.kedudukan <= 3).sort((a,b)=>a.kedudukan-b.kedudukan);
+    if(entries.length === 0) return;
+    rows.push({ kategori, acara, jantina, type, day, meta, entries, catIdx: catOrderPrint.indexOf(kategori) });
+  });
+
+  if(rows.length === 0){
+    showToast("Tiada keputusan tersimpan untuk " + (dayFilter===0 ? "mana-mana hari" : "Hari " + dayFilter) + " lagi.", "warn");
+    return;
+  }
+
+  rows.sort((a,b)=> a.day - b.day || a.catIdx - b.catIdx || a.acara.localeCompare(b.acara) || a.jantina.localeCompare(b.jantina));
+
+  const medalIcon = { "Emas":"\uD83E\uDD47", "Perak":"\uD83E\uDD48", "Gangsa":"\uD83E\uDD49" };
+  let html = `
+    <div class="print-form-header">
+      <h2>KEPUTUSAN KESELURUHAN &amp; NAMA PEMENANG</h2>
+      <div class="print-form-meta">
+        <div><b>Kejohanan Olahraga Pendidikan Khas MSSD Kluang 2026</b></div>
+        <div>${dayFilter===0 ? "Semua Hari" : dayFilter===1 ? "Hari 1 \u2014 Rabu 22 Julai 2026" : "Hari 2 \u2014 Khamis 23 Julai 2026"}</div>
+      </div>
+    </div>`;
+
+  let lastDay = null;
+  rows.forEach(row=>{
+    if(dayFilter === 0 && row.day !== lastDay){
+      lastDay = row.day;
+      html += `<h3 style="font-family:'Oswald',sans-serif;text-transform:uppercase;border-bottom:2px solid #000;padding-bottom:6px;margin-top:26px;">Hari ${row.day} \u2014 ${row.day===1 ? "22 Julai" : "23 Julai"}</h3>`;
+    }
+    const jantinaLabel = row.type === "KUM" ? "Berpasukan" : (row.jantina === "L" ? "Lelaki" : "Perempuan");
+    html += `<div style="margin-top:14px;">
+      <div style="font-weight:700;font-family:'Oswald',sans-serif;font-size:14px;">${escapeHtml(row.acara)} \u2014 ${escapeHtml(row.meta.label)} (${jantinaLabel})</div>
+      <table class="print-form-table" style="margin-top:4px;">
+        <thead><tr><th style="width:70px;">Kedudukan</th><th>Nama${row.type==="KUM" ? " Pasukan" : ""}</th><th>Sekolah</th></tr></thead>
+        <tbody>
+          ${row.entries.map(en=>`<tr><td>${medalIcon[en.pingat]||""} ${escapeHtml(en.pingat||("#"+en.kedudukan))}</td><td><b>${escapeHtml(en.label)}</b></td><td>${escapeHtml(en.sekolah)}</td></tr>`).join("")}
+        </tbody>
+      </table>
+    </div>`;
+  });
+
+  document.getElementById("printFormArea").innerHTML = html;
+  document.body.classList.add("printing-form");
+  window.print();
+  setTimeout(()=>{ document.body.classList.remove("printing-form"); }, 500);
 }
 
 function buildEventScheduleItems(){
