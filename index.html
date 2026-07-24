@@ -78,26 +78,26 @@ h1,h2,h3,h4{font-family:'Oswald',sans-serif;text-transform:uppercase;letter-spac
   z-index:0;
   pointer-events:none;
   overflow:hidden;
-  background:#EAF2FC;
+  background:linear-gradient(160deg, #081436 0%, #0B1F5C 55%, #122a6e 100%);
 }
 .bg-theme::before{
   content:"";
   position:absolute;
   inset:0;
   background-image:
-    radial-gradient(circle at 8% 12%, rgba(11,31,92,0.10) 0, rgba(11,31,92,0.10) 120px, transparent 121px),
-    radial-gradient(circle at 92% 18%, rgba(78,131,224,0.14) 0, rgba(78,131,224,0.14) 160px, transparent 161px),
-    radial-gradient(circle at 14% 85%, rgba(78,131,224,0.12) 0, rgba(78,131,224,0.12) 140px, transparent 141px),
-    radial-gradient(circle at 88% 82%, rgba(11,31,92,0.09) 0, rgba(11,31,92,0.09) 190px, transparent 191px),
-    radial-gradient(circle at 50% 50%, rgba(11,31,92,0.05) 0, rgba(11,31,92,0.05) 260px, transparent 261px);
+    radial-gradient(circle at 8% 12%, rgba(255,255,255,0.07) 0, rgba(255,255,255,0.07) 120px, transparent 121px),
+    radial-gradient(circle at 92% 18%, rgba(78,131,224,0.22) 0, rgba(78,131,224,0.22) 160px, transparent 161px),
+    radial-gradient(circle at 14% 85%, rgba(78,131,224,0.18) 0, rgba(78,131,224,0.18) 140px, transparent 141px),
+    radial-gradient(circle at 88% 82%, rgba(255,255,255,0.05) 0, rgba(255,255,255,0.05) 190px, transparent 191px),
+    radial-gradient(circle at 50% 50%, rgba(255,255,255,0.04) 0, rgba(255,255,255,0.04) 260px, transparent 261px);
 }
 .bg-theme::after{
   content:"";
   position:absolute;
   inset:0;
   background-image:
-    linear-gradient(115deg, transparent 46%, rgba(11,31,92,0.05) 47%, rgba(11,31,92,0.05) 49%, transparent 50%),
-    linear-gradient(65deg, transparent 62%, rgba(78,131,224,0.07) 63%, rgba(78,131,224,0.07) 65%, transparent 66%);
+    linear-gradient(115deg, transparent 46%, rgba(255,255,255,0.04) 47%, rgba(255,255,255,0.04) 49%, transparent 50%),
+    linear-gradient(65deg, transparent 62%, rgba(78,131,224,0.10) 63%, rgba(78,131,224,0.10) 65%, transparent 66%);
 }
 /* ---------- Login screen ---------- */
 .login-wrap{
@@ -1562,6 +1562,44 @@ body.printing-form #printFormArea{display:block !important;padding:24px;}
   <footer class="app-footer no-print">Start List Acara Berkumpulan &middot; MSSD Kluang</footer>
 </div>
 
+<!-- ================= HALAMAN KEPUTUSAN KESELURUHAN SEMUA PESERTA (ADMIN SAHAJA) ================= -->
+<div id="adminFullResultsPage" style="display:none;">
+  <div class="app-header no-print">
+    <div class="brand">
+      <div>
+        <h1>Kejohanan Olahraga Pendidikan Khas MSSD Kluang 2026</h1>
+        <div class="school-tag">Keputusan Keseluruhan Semua Peserta (Admin) &middot; Semua Kedudukan</div>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-ghost btn-sm no-print" style="color:#fff;border-color:rgba(255,255,255,0.4);" onclick="renderAdminFullResults()">Muat Semula</button>
+      <button class="btn btn-ghost btn-sm no-print" style="color:#fff;border-color:rgba(255,255,255,0.4);" onclick="window.print()">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/></svg>
+        Cetak
+      </button>
+      <button class="btn btn-ghost btn-sm no-print" style="color:#fff;border-color:rgba(255,255,255,0.4);" onclick="closeAdminFullResultsPage()">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+        Kembali
+      </button>
+    </div>
+  </div>
+  <div class="lane-divider no-print"></div>
+
+  <div class="container">
+    <div class="panel" style="border-color:var(--johor-blue);">
+      <div class="panel-head"><h2 style="color:var(--johor-blue);">Keputusan Keseluruhan &mdash; Semua Peserta (Semua Kedudukan)</h2></div>
+      <div class="panel-body">
+        <div class="field-note no-print" style="margin-bottom:12px;">
+          Senarai LENGKAP semua peserta/pasukan yang mempunyai keputusan tersimpan bagi setiap acara &mdash; termasuk yang BUKAN pemenang (kedudukan ke-4 dan seterusnya), bukan cuma Emas/Perak/Gangsa. Disusun ikut Akhir (Akhir 1, Akhir 2, dst.) mengikut acara di mana peserta itu didaftarkan/bertanding.
+        </div>
+        <div id="adminFullResultsWrap"></div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="app-footer no-print">Keputusan Keseluruhan Semua Peserta &middot; MSSD Kluang (Admin)</footer>
+</div>
+
 <!-- ================= HALAMAN SENARAI PESERTA ACARA (generik, semua acara) ================= -->
 <div id="eventRosterPage" style="display:none;">
   <div class="app-header no-print">
@@ -1771,6 +1809,10 @@ body.printing-form #printFormArea{display:block !important;padding:24px;}
       <button class="btn btn-primary btn-sm" id="btnNavSaveResultsAdmin" style="background:#1a8f3c;border-color:#1a8f3c;" onclick="navBarSaveResults()" title="Simpan keputusan yang telah diisi">
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg>
         Simpan Keputusan
+      </button>
+      <button class="btn btn-ghost btn-sm" style="color:#fff;border-color:rgba(255,255,255,0.4);" onclick="openAdminFullResultsPage()" title="Keputusan Keseluruhan Semua Peserta (termasuk bukan pemenang) — Admin sahaja">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 17V9"/><path d="M13 17V5"/><path d="M17 17v-3"/><path d="M4 21h16"/></svg>
+        Keputusan Semua Peserta
       </button>
       <button class="btn btn-ghost btn-sm" id="btnToggleRegLock" style="color:#fff;border-color:rgba(255,255,255,0.4);" onclick="toggleRegistrationLock()" title="Kunci/Buka akses Pengurus Pasukan">
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg> Kunci Pendaftaran
@@ -2489,7 +2531,7 @@ function formatLockoutRemaining(ms){
    2. Extensions > Apps Script > tampal kandungan fail Code.gs yang disertakan.
    3. Deploy > New deployment > Web app > Execute as: Me > Who has access: Anyone.
    4. Salin URL Web App yang dijana, gantikan nilai di bawah. */
-const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwi1h7wi929z4-z4yEECyiVXY4CiMZmRjWuRVzxDyHwTgCzvBZNeUEpINkHUne4lwH0fw/exec";
+const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwAzQej8fj2zLxYgiCE5sGtfgtNZX_YUzjTJsGJAFM8oQ_7GDAJ4y1AtmTQ_YxX178MZA/exec";
 
 /* Kunci rahsia API — MESTI SAMA PERSIS dengan API_SECRET dalam Code.gs.
    Ini disertakan pada setiap permintaan simpan/padam/reset supaya
@@ -4224,7 +4266,7 @@ async function fetchResultsFromSheet(){
       if(!grouped[key]) grouped[key] = [];
       grouped[key].push({
         entryKey: r.EntryKey, label: r.Label, sekolah: r.Sekolah,
-        nilai: parseFloat(r.Nilai), kedudukan: parseInt(r.Kedudukan,10), pingat: r.Pingat
+        nilai: parseFloat(r.Nilai), kedudukan: parseInt(r.Kedudukan,10), pingat: r.Pingat, heat: r.Akhir || ""
       });
     });
     Object.keys(grouped).forEach(key=>{
@@ -5237,7 +5279,7 @@ async function saveHeatResults(heatIdx){
     en.pingat = idx===0 ? "Emas" : idx===1 ? "Perak" : idx===2 ? "Gangsa" : (idx===3 ? "Tempat Ke-4" : "");
   });
   const thisHeatKeys = new Set(heat.map(en=>en.entryKey));
-  const newEntries = sorted.map(en=>({ entryKey:en.entryKey, label:en.label, sekolah:en.sekolah, nilai:en.nilai, kedudukan:en.rank, pingat:en.pingat }));
+  const newEntries = sorted.map(en=>({ entryKey:en.entryKey, label:en.label, sekolah:en.sekolah, nilai:en.nilai, kedudukan:en.rank, pingat:en.pingat, heat:heatIdx+1 }));
 
   const statusEl = document.getElementById("heatSaveStatus" + heatIdx);
   if(statusEl) statusEl.textContent = "Menyimpan...";
@@ -5258,7 +5300,7 @@ async function saveHeatResults(heatIdx){
         const existingForEvent = (data.results || [])
           .filter(r => r.Kategori === ctx.kategori && r.Acara === ctx.baseName && (r.Jantina||"MIX") === ctx.jantinaGroup)
           .filter(r => !thisHeatKeys.has(r.EntryKey)) // buang entri LAMA Akhir ini sahaja, kekalkan Akhir lain
-          .map(r => ({ entryKey:r.EntryKey, label:r.Label, sekolah:r.Sekolah, nilai:parseFloat(r.Nilai), kedudukan:parseInt(r.Kedudukan,10), pingat:r.Pingat }));
+          .map(r => ({ entryKey:r.EntryKey, label:r.Label, sekolah:r.Sekolah, nilai:parseFloat(r.Nilai), kedudukan:parseInt(r.Kedudukan,10), pingat:r.Pingat, heat:r.Akhir || "" }));
         merged = existingForEvent.concat(newEntries);
       }
     }catch(err){ console.error("saveHeatResults fetch error:", err); }
@@ -5853,6 +5895,104 @@ function closeIndividuDashboardPage(){
   const el = document.getElementById(back);
   if(el) el.style.display = (back === "loginScreen") ? "flex" : "block";
   window.scrollTo({top:0, behavior:"instant"});
+}
+
+/* =========================================================
+   KEPUTUSAN KESELURUHAN SEMUA PESERTA — ADMIN SAHAJA. Papar SETIAP
+   peserta/pasukan yang ada keputusan tersimpan bagi setiap acara,
+   termasuk yang BUKAN pemenang (bukan cuma Emas/Perak/Gangsa), disusun
+   ikut Akhir (kalau acara itu dibahagikan ikut Akhir semasa disimpan).
+   ========================================================= */
+function openAdminFullResultsPage(){
+  document.querySelectorAll("#app, #adminApp, #statistikApp, #kumpulanDashboardPage, #individuDashboardPage").forEach(el=>{ el.style.display = "none"; });
+  document.getElementById("adminFullResultsPage").style.display = "block";
+  window.scrollTo({top:0, behavior:"instant"});
+  renderAdminFullResults();
+}
+
+function closeAdminFullResultsPage(){
+  document.getElementById("adminFullResultsPage").style.display = "none";
+  document.getElementById("adminApp").style.display = "block";
+  window.scrollTo({top:0, behavior:"instant"});
+}
+
+function renderAdminFullResults(){
+  const wrap = document.getElementById("adminFullResultsWrap");
+  if(!wrap) return;
+  const catOrderList = ["B8","B10","B12","B15","B19","SD_SR","SD_SM","PRA"];
+  const rows = [];
+
+  Object.keys(resultsDataCache).forEach(key=>{
+    const parts = key.split("||");
+    const kategori = parts[0], acara = parts[1], jantina = parts[2];
+    const meta = CATEGORY_META[kategori];
+    if(!meta) return;
+    const type = (jantina === "MIX") ? "KUM" : "IND";
+    const isPadangEvent = PADANG_EVENTS.includes(acara);
+    const day = getEventDay(kategori, type, acara);
+    const entries = (resultsDataCache[key] || []).slice().sort((a,b)=>{
+      const ah = parseInt(a.heat,10) || 0, bh = parseInt(b.heat,10) || 0;
+      if(ah !== bh) return ah - bh;
+      return (a.kedudukan||999) - (b.kedudukan||999);
+    });
+    if(entries.length === 0) return;
+    rows.push({ kategori, acara, jantina, type, day, meta, entries, isPadang: isPadangEvent, catIdx: catOrderList.indexOf(kategori) });
+  });
+
+  if(rows.length === 0){
+    wrap.innerHTML = '<div class="field-note">Tiada keputusan tersimpan untuk sebarang acara lagi.</div>';
+    return;
+  }
+
+  rows.sort((a,b)=> a.day - b.day || a.catIdx - b.catIdx || a.acara.localeCompare(b.acara) || a.jantina.localeCompare(b.jantina));
+
+  const medalIcon = { "Emas":"\uD83E\uDD47", "Perak":"\uD83E\uDD48", "Gangsa":"\uD83E\uDD49" };
+  let html = "";
+  let lastDay = null;
+  rows.forEach(row=>{
+    if(row.day !== lastDay){
+      lastDay = row.day;
+      html += `<h3 style="font-family:'Oswald',sans-serif;text-transform:uppercase;border-bottom:2px solid #000;padding-bottom:6px;margin-top:26px;">Hari ${row.day} \u2014 ${row.day===1 ? "22 Julai" : "23 Julai"}</h3>`;
+    }
+    const jantinaLabel = row.type === "KUM" ? "Berpasukan" : (row.jantina === "L" ? "Lelaki" : "Perempuan");
+    const recordUnit = row.isPadang ? "m" : "s";
+
+    // Kumpulkan ikut Akhir — peserta tanpa nombor Akhir (acara tak dibahagikan) masuk satu kumpulan tunggal.
+    const heatGroups = {};
+    row.entries.forEach(en=>{
+      const h = en.heat ? String(en.heat) : "";
+      if(!heatGroups[h]) heatGroups[h] = [];
+      heatGroups[h].push(en);
+    });
+    const heatKeys = Object.keys(heatGroups).sort((a,b)=>{
+      if(a === "") return -1;
+      if(b === "") return 1;
+      return parseInt(a,10) - parseInt(b,10);
+    });
+
+    html += `<div style="margin-top:16px;page-break-inside:avoid;">
+      <div style="font-weight:700;font-family:'Oswald',sans-serif;font-size:14px;">${escapeHtml(row.acara)} \u2014 ${escapeHtml(row.meta.label)} (${jantinaLabel}) <span class="event-quota-tag">${row.entries.length} peserta</span></div>`;
+
+    heatKeys.forEach(hk=>{
+      const groupEntries = heatGroups[hk];
+      if(hk !== ""){
+        html += `<div style="font-weight:700;font-size:11.5px;margin:8px 0 2px;color:var(--johor-blue);">Akhir ${escapeHtml(hk)}</div>`;
+      }
+      html += `<table class="print-form-table" style="margin-top:4px;">
+        <thead><tr><th style="width:70px;">Kedudukan</th><th>Nama${row.type==="KUM" ? " Pasukan" : ""}</th><th>Sekolah</th><th style="width:90px;">Rekod</th></tr></thead>
+        <tbody>
+          ${groupEntries.map(en=>{
+            const posLabel = en.pingat ? `${medalIcon[en.pingat]||""} ${escapeHtml(en.pingat)}` : `#${en.kedudukan||"-"}`;
+            const recordVal = (en.nilai!=null && !isNaN(en.nilai)) ? en.nilai+recordUnit : "-";
+            return `<tr><td>${posLabel}</td><td><b>${escapeHtml(en.label)}</b></td><td>${escapeHtml(en.sekolah)}</td><td class="mono">${recordVal}</td></tr>`;
+          }).join("")}
+        </tbody>
+      </table>`;
+    });
+    html += `</div>`;
+  });
+
+  wrap.innerHTML = html;
 }
 
 function openKumpulanDashboardPage(){
